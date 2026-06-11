@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+
+# PyInstaller output
+build/
+dist/
+
+# Secrets — the Gemini API key lives here in plain text; never commit it
+.winscan_key
+
+# Local-only Claude settings
+.claude/settings.local.json
