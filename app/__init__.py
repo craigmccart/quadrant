@@ -1,0 +1,1 @@
+"""WinScan application package."""
