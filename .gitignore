@@ -11,3 +11,6 @@ dist/
 
 # Local-only Claude settings
 .claude/settings.local.json
+
+# Scratch screenshots from .shot.ps1
+.shot.png
