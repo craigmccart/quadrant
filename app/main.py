@@ -180,7 +180,7 @@ class WinScanApp(ctk.CTk):
         ctk.CTkLabel(bottom, text=f"v{APP_VERSION}",
                      font=F_MICRO(), text_color=INK_MUTE, anchor="w"
                      ).grid(row=1, column=0, sticky="w", padx=14)
-        ctk.CTkLabel(bottom, text="cjm labs",
+        ctk.CTkLabel(bottom, text="sonofg0tham",
                      font=F_MICRO(), text_color=INK_MUTE, anchor="e"
                      ).grid(row=1, column=0, sticky="e", padx=14)
 
