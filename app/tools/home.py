@@ -22,8 +22,8 @@ class HomeTool(ctk.CTkFrame):
         self.grid_rowconfigure(2, weight=1)
 
         hdr, rule = make_page_header(
-            self, title="WinScan",
-            subtitle="Keep your PC fast, clean, and secure — pick a task to begin.")
+            self, title="Home",
+            subtitle="Everything you need to keep your PC fast, tidy and private.")
         hdr.grid(row=0, column=0, sticky="ew")
         rule.grid(row=1, column=0, sticky="ew", pady=(2, 14))
 

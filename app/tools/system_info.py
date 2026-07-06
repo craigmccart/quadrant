@@ -3,15 +3,30 @@
 import os
 import shutil
 import subprocess
+import winreg
 
 import customtkinter as ctk
 
-from app.theme import (
+from app.theme import (ACCENT_HOVER, ON_ACCENT, BORDER, INK,
     _font, ACCENT, BG_HOVER, BG_RAISED, GREEN, INFO, INK_DIM, INK_MUTE, ORANGE,
     PURPLE, R_BASE, RED_SOFT,
 )
 from app.helpers import _get_ram_info, _get_uptime_str, fmt_size
 from app.widgets import make_page_header, Tile
+
+
+def _cpu_marketing_name() -> str:
+    """The human CPU name (e.g. 'AMD Ryzen 7 7700X 8-Core Processor') from the
+    registry — platform.processor() returns the raw family/model/stepping id,
+    which no shipped utility shows."""
+    try:
+        with winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE,
+                r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as k:
+            return str(winreg.QueryValueEx(k, "ProcessorNameString")[0]).strip()
+    except OSError:
+        import platform
+        return platform.processor() or "Unknown"
 
 
 # ── Tool 2: System Info ──────────────────────────────────────────────────────
@@ -37,8 +52,8 @@ class SystemInfoTool(ctk.CTkFrame):
         ctk.CTkButton(action_row, text="Refresh",
                       width=100, height=34,
                       font=_font(11, "bold", "Segoe UI"),
-                      fg_color=ACCENT, hover_color="#3a8aef",
-                      text_color="#0a1322", corner_radius=R_BASE,
+                      fg_color=ACCENT, hover_color=ACCENT_HOVER,
+                      text_color=ON_ACCENT, corner_radius=R_BASE,
                       command=self._load
                       ).pack(side="left")
         ctk.CTkLabel(action_row, text="Click Refresh to re-sample live values.",
@@ -57,6 +72,18 @@ class SystemInfoTool(ctk.CTkFrame):
         if not self._loaded:
             self._load()
 
+    def _spec_row(self, parent, label: str, value: str, divider: bool = True):
+        """Settings-style row: label left in secondary, value right in primary."""
+        if divider:
+            ctk.CTkFrame(parent, fg_color=BORDER, height=1).pack(fill="x")
+        row = ctk.CTkFrame(parent, fg_color="transparent", height=40)
+        row.pack(fill="x")
+        row.pack_propagate(False)
+        ctk.CTkLabel(row, text=label, font=_font(12),
+                     text_color=INK_DIM, anchor="w").pack(side="left")
+        ctk.CTkLabel(row, text=value, font=_font(12, "bold"),
+                     text_color=INK, anchor="e").pack(side="right")
+
     def _load(self):
         for w in self._body.winfo_children():
             w.destroy()
@@ -64,13 +91,9 @@ class SystemInfoTool(ctk.CTkFrame):
 
         import platform
 
-        # Tiles are placed in pack-based rows below. Skip the grid container.
-
         # Data gathering
-        os_ver = f"Windows {platform.version()}"
         build  = platform.win32_ver()[1] if hasattr(platform, "win32_ver") else ""
-        cpu    = platform.processor() or "Unknown"
-        cpu    = cpu[:32] + "…" if len(cpu) > 32 else cpu
+        cpu    = _cpu_marketing_name()
         cores  = os.cpu_count() or 0
         try:
             total_ram, avail_ram = _get_ram_info()
@@ -95,46 +118,33 @@ class SystemInfoTool(ctk.CTkFrame):
             gpu = r.stdout.strip().split("\n")[0] or "Unknown"
         except Exception:
             pass
-        gpu_short = gpu[:32] + "…" if len(gpu) > 32 else gpu
 
         ram_colour = GREEN if ram_pct < 0.7 else ORANGE if ram_pct < 0.9 else RED_SOFT
 
-        # Single-column tile stack — each tile is full content width.
-        # Reliable across all CTk + DPI quirks, and reads cleanly as a
-        # Datadog-style status dashboard.
-
-        t = Tile(self._body, "Operating system", accent=INFO)
-        t.kpi("Windows 11", f"Build {build}" if build else os_ver, value_size=20)
+        # ── Device card: dense Settings-style rows, ten facts in one card ──
+        t = Tile(self._body, "Device")
+        self._spec_row(t.body, "Device name", hostname, divider=False)
+        self._spec_row(t.body, "Signed in as", username)
+        self._spec_row(t.body, "Windows", f"Windows 11, build {build}" if build else "Windows 11")
+        self._spec_row(t.body, "Processor", cpu)
+        self._spec_row(t.body, "Logical cores", str(cores))
+        self._spec_row(t.body, "Graphics", gpu)
+        self._spec_row(t.body, "Uptime", uptime)
         t.frame.pack(fill="x", pady=(0, 8))
 
-        t = Tile(self._body, "Processor", accent=ACCENT)
-        t.kpi(cpu, f"{cores} logical cores", value_size=16)
-        t.frame.pack(fill="x", pady=(0, 8))
-
+        # ── Memory gauge (live status, colour reflects real state) ─────────
         t = Tile(self._body, "Memory", accent=ram_colour)
         if total_ram:
             t.gauge(f"{fmt_size(used_ram)} / {fmt_size(total_ram)}",
                      pct=ram_pct, colour=ram_colour,
-                     sub=f"{ram_pct*100:.0f}% used  ·  {fmt_size(avail_ram)} free")
+                     sub=f"{ram_pct*100:.0f}% used · {fmt_size(avail_ram)} free")
         else:
             t.kpi("Unknown", "")
         t.frame.pack(fill="x", pady=(0, 8))
 
-        t = Tile(self._body, "Graphics", accent=PURPLE)
-        t.kpi(gpu_short, "", value_size=16)
-        t.frame.pack(fill="x", pady=(0, 8))
-
-        t = Tile(self._body, "Uptime", accent=GREEN)
-        t.kpi(uptime, "since last boot", value_size=18)
-        t.frame.pack(fill="x", pady=(0, 8))
-
-        t = Tile(self._body, "Identity", accent=INK_DIM)
-        t.kpi(hostname, f"signed in as {username}", value_size=16)
-        t.frame.pack(fill="x", pady=(0, 8))
-
         # ── Storage section ─────────────────────────────────────────────
-        ctk.CTkLabel(self._body, text="STORAGE",
-                     font=_font(9, "bold", "Cascadia Mono"),
+        ctk.CTkLabel(self._body, text="Storage",
+                     font=_font(12, "bold", "Segoe UI"),
                      text_color=INK_MUTE
                      ).pack(anchor="w", pady=(8, 8))
 

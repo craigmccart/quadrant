@@ -11,10 +11,10 @@ import tkinter as tk
 from tkinter import messagebox
 
 from app.config import DRILL_DOWN_CAP, GEMINI_MODEL
-from app.theme import (
+from app.theme import (ACCENT_HOVER, ON_ACCENT, TINT, 
     _font, _px, ACCENT, ACCENT_DIM, BG_BASE, BG_CARD, BG_DEEP, BG_HOVER, BG_PANEL,
     BG_RAISED, BORDER, DPI_SCALE, F_BODY, F_BODY_B, F_H2, F_MICRO, F_MONO, F_MONO_B,
-    F_SMALL, GREEN, INK, INK_DIM, INK_MUTE, ORANGE, PURPLE, R_BASE, R_SHARP,
+    F_SMALL, GREEN, INK, INK_DIM, INK_MUTE, MONO_FAMILY, ORANGE, PURPLE, R_BASE, R_SHARP,
     RED_BTN, RED_BTN_H, RED_SOFT, TEXT_DIM,
 )
 from app.helpers import fmt_size, size_color
@@ -107,8 +107,8 @@ class CleanupTool(ctk.CTkFrame):
             status_row, text="Scan",
             width=100, height=34,
             font=_font(12, "bold", "Segoe UI"),
-            fg_color=ACCENT, hover_color="#3a8aef",
-            text_color="#0a1322", corner_radius=R_BASE,
+            fg_color=ACCENT, hover_color=ACCENT_HOVER,
+            text_color=ON_ACCENT, corner_radius=R_BASE,
             command=self._start_scan)
         self._scan_btn.pack(side="left")
 
@@ -129,18 +129,18 @@ class CleanupTool(ctk.CTkFrame):
         self._status_dot.pack(side="left", padx=(0, 8))
 
         self._status_lbl = ctk.CTkLabel(status_row,
-                                         text="Idle — click Scan",
+                                         text="Ready. Click Scan to begin.",
                                          font=_font(12, "normal", "Segoe UI"),
                                          text_color=INK_DIM, anchor="w")
         self._status_lbl.pack(side="left")
 
         # Compact stat pills appear after a successful scan
         self._stat_total = ctk.CTkLabel(status_row, text="",
-                                          font=_font(12, "bold", "Cascadia Mono"),
+                                          font=_font(12, "bold", "Segoe UI"),
                                           text_color=GREEN, anchor="w")
         self._stat_total.pack(side="left", padx=(16, 0))
         self._stat_count = ctk.CTkLabel(status_row, text="",
-                                          font=_font(12, "normal", "Cascadia Mono"),
+                                          font=_font(12, "normal", "Segoe UI"),
                                           text_color=INK_DIM, anchor="w")
         self._stat_count.pack(side="left", padx=(8, 0))
 
@@ -162,7 +162,7 @@ class CleanupTool(ctk.CTkFrame):
         ai_hdr.pack(fill="x", padx=14, pady=(10, 6))
 
         ctk.CTkLabel(ai_hdr, text=GEMINI_MODEL,
-                     font=_font(8, "normal", "Cascadia Mono"),
+                     font=_font(8, "normal", MONO_FAMILY),
                      text_color=INK_MUTE
                      ).pack(side="right")
 
@@ -170,8 +170,8 @@ class CleanupTool(ctk.CTkFrame):
         ai_title_row.pack(side="left")
         ctk.CTkFrame(ai_title_row, fg_color=PURPLE, width=6, height=6,
                      corner_radius=3).pack(side="left", padx=(0, 6))
-        ctk.CTkLabel(ai_title_row, text="GEMINI'S READ",
-                     font=_font(8, "bold", "Cascadia Mono"),
+        ctk.CTkLabel(ai_title_row, text="Gemini's read",
+                     font=_font(11, "bold", "Segoe UI"),
                      text_color=INK_DIM
                      ).pack(side="left")
 
@@ -197,7 +197,7 @@ class CleanupTool(ctk.CTkFrame):
         res_hdr = ctk.CTkFrame(res_panel, fg_color="transparent")
         res_hdr.grid(row=0, column=0, sticky="ew", padx=16, pady=(12, 10))
 
-        ctk.CTkButton(res_hdr, text="none", width=44, height=22,
+        ctk.CTkButton(res_hdr, text="Clear", width=70, height=22,
                       font=_font(9, "normal", "Segoe UI"),
                       fg_color="transparent",
                       hover_color=BG_HOVER, text_color=INK_DIM,
@@ -205,7 +205,7 @@ class CleanupTool(ctk.CTkFrame):
                       corner_radius=R_SHARP,
                       command=lambda: self._select_all(False)
                       ).pack(side="right")
-        ctk.CTkButton(res_hdr, text="all", width=36, height=22,
+        ctk.CTkButton(res_hdr, text="Select all", width=90, height=22,
                       font=_font(9, "normal", "Segoe UI"),
                       fg_color="transparent",
                       hover_color=BG_HOVER, text_color=INK_DIM,
@@ -213,8 +213,8 @@ class CleanupTool(ctk.CTkFrame):
                       corner_radius=R_SHARP,
                       command=lambda: self._select_all(True)
                       ).pack(side="right", padx=(0, 4))
-        self._res_title = ctk.CTkLabel(res_hdr, text="FINDINGS",
-                                        font=_font(9, "bold", "Cascadia Mono"),
+        self._res_title = ctk.CTkLabel(res_hdr, text="Findings",
+                                        font=_font(11, "bold", "Segoe UI"),
                                         text_color=INK_DIM, anchor="w")
         self._res_title.pack(side="left")
 
@@ -230,7 +230,7 @@ class CleanupTool(ctk.CTkFrame):
 
         self._empty_lbl = ctk.CTkLabel(
             self._scroll,
-            text="No scan yet.\nClick Scan in the top right to begin.",
+            text="No scan yet.\nSelect Scan to check for junk files.",
             font=_font(11, "normal", "Segoe UI"), text_color=INK_MUTE,
             justify="center", wraplength=400)
         self._empty_lbl.grid(row=0, column=0, pady=72)
@@ -240,20 +240,22 @@ class CleanupTool(ctk.CTkFrame):
         act = ctk.CTkFrame(self, fg_color="transparent")
         act.grid(row=5, column=0, sticky="ew", pady=(12, 0))
 
-        # Right side: destructive primary, packed last (rightmost)
+        # Right side: destructive action. Starts NEUTRAL and disabled — it only
+        # turns red once something is actually selected (see _update_total).
+        # Destructive colour appears at the moment of destruction, not before.
         self._del_btn = ctk.CTkButton(
             act, text="Delete selected",
             font=_font(11, "bold", "Segoe UI"),
             height=32, width=140,
-            fg_color=RED_BTN, hover_color=RED_BTN_H,
-            text_color="#ffffff", corner_radius=R_BASE,
+            fg_color=BG_HOVER, hover_color=BG_HOVER,
+            text_color=INK_MUTE, corner_radius=R_BASE,
             state="disabled", command=self._confirm_delete)
         self._del_btn.pack(side="right", pady=4)
 
         # Log toggle
         self._log_visible = False
         self._log_toggle = ctk.CTkButton(
-            act, text="show log", width=80, height=28,
+            act, text="Show log", width=90, height=28,
             font=_font(9, "normal", "Segoe UI"),
             fg_color="transparent",
             hover_color=BG_HOVER, text_color=INK_MUTE,
@@ -263,7 +265,7 @@ class CleanupTool(ctk.CTkFrame):
 
         # Left: selection summary
         self._total_lbl = ctk.CTkLabel(act, text="No selection",
-                                        font=_font(11, "bold", "Cascadia Mono"),
+                                        font=_font(12, "normal", "Segoe UI"),
                                         text_color=INK_DIM, anchor="w")
         self._total_lbl.pack(side="left", pady=4)
 
@@ -289,10 +291,10 @@ class CleanupTool(ctk.CTkFrame):
         self._log_visible = not self._log_visible
         if self._log_visible:
             self._log_box.grid(row=6, column=0, sticky="ew", pady=(8, 0))
-            self._log_toggle.configure(text="hide log")
+            self._log_toggle.configure(text="Hide log")
         else:
             self._log_box.grid_remove()
-            self._log_toggle.configure(text="show log")
+            self._log_toggle.configure(text="Show log")
 
     def _open_settings(self):
         """Modal-ish settings popover for the Gemini API key."""
@@ -352,8 +354,8 @@ class CleanupTool(ctk.CTkFrame):
                       corner_radius=R_BASE, command=win.destroy
                       ).pack(side="right", padx=(8, 0))
         ctk.CTkButton(actions, text="Save", width=80, height=30, font=F_BODY_B(),
-                      fg_color=ACCENT, hover_color="#d99c2c",
-                      text_color="#1a1408", corner_radius=R_BASE,
+                      fg_color=ACCENT, hover_color=ACCENT_HOVER,
+                      text_color=ON_ACCENT, corner_radius=R_BASE,
                       command=save_and_close
                       ).pack(side="right")
 
@@ -365,7 +367,7 @@ class CleanupTool(ctk.CTkFrame):
             self._scan_btn.configure(state="disabled", text="Scanning…")
         self._del_btn.configure(state="disabled")
         self._clear_results()
-        self._ai_write("Scan in progress — Gemini's read appears once it finishes.")
+        self._ai_write("Scan in progress. Gemini's read appears once it finishes.")
         self._status_dot.configure(text="●", text_color=ACCENT)
         self._status_lbl.configure(text="Scanning your drive…", text_color=INK)
         self._stat_total.configure(text="")
@@ -427,7 +429,7 @@ class CleanupTool(ctk.CTkFrame):
         self._file_cache.clear()
         self._toggle_btns.clear()
         self._empty_lbl.grid(row=0, column=0, pady=72)
-        self._res_title.configure(text="FINDINGS")
+        self._res_title.configure(text="Findings")
         self._total_lbl.configure(text="No selection")
         self._del_btn.configure(state="disabled")
         # Reset inline stats
@@ -453,12 +455,12 @@ class CleanupTool(ctk.CTkFrame):
         danger_keywords = ("large old", "downloads")
 
         if any(k in low for k in danger_keywords):
-            return RED_SOFT, "REVIEW"
+            return RED_SOFT, "Review"
         if any(k in low for k in caution_keywords):
-            return ORANGE, "CAUTION"
+            return ORANGE, "Caution"
         if any(k in low for k in safe_keywords):
-            return GREEN, "SAFE"
-        return INK_MUTE, "—"
+            return GREEN, "Safe"
+        return INK_MUTE, ""
 
     def _show_results(self, results: list[ScanResult]):
         self._empty_lbl.grid_remove()
@@ -474,12 +476,6 @@ class CleanupTool(ctk.CTkFrame):
             row.grid_columnconfigure(2, weight=1)
             self._row_frames.append(row)
 
-            # Left colour stripe — risk indicator at a glance
-            stripe = ctk.CTkFrame(row, fg_color=risk_colour,
-                                   width=_px(4), corner_radius=2)
-            stripe.grid(row=0, column=0, rowspan=2, sticky="ns",
-                         padx=(8, 0), pady=10)
-
             # Checkbox
             cb = ctk.CTkCheckBox(row, text="", variable=var,
                                   width=_px(22),
@@ -489,19 +485,21 @@ class CleanupTool(ctk.CTkFrame):
                                   fg_color=ACCENT, hover_color=ACCENT_DIM,
                                   border_color=BORDER, corner_radius=R_SHARP,
                                   command=self._update_total)
-            cb.grid(row=0, column=1, rowspan=2, padx=(10, 12), pady=10)
+            cb.grid(row=0, column=1, rowspan=2, padx=(14, 12), pady=10)
 
-            # Title row: name + risk tag
+            # Title row: name + risk badge (pale tint + dark word — InfoBar style)
             title_row = ctk.CTkFrame(row, fg_color="transparent")
             title_row.grid(row=0, column=2, sticky="w", padx=0, pady=(10, 0))
             ctk.CTkLabel(title_row, text=r.label, font=F_BODY_B(),
                          text_color=INK, anchor="w"
                          ).pack(side="left")
-            # Risk tag chip (small caps mono label after the name)
-            ctk.CTkLabel(title_row, text=risk_tag,
-                         font=_font(8, "bold", "Cascadia Mono"),
-                         text_color=risk_colour, anchor="w"
-                         ).pack(side="left", padx=(10, 0))
+            if risk_tag:
+                ctk.CTkLabel(title_row, text=f"  {risk_tag}  ",
+                             font=_font(10, "bold", "Segoe UI"),
+                             text_color=risk_colour,
+                             fg_color=TINT.get(risk_colour, BG_HOVER),
+                             corner_radius=R_SHARP, anchor="w"
+                             ).pack(side="left", padx=(10, 0))
 
             # Subtitle
             ctk.CTkLabel(row, text=r.note, font=F_SMALL(),
@@ -526,7 +524,7 @@ class CleanupTool(ctk.CTkFrame):
             self._expand_states.append(False)
             self._detail_frames.append(None)
             self._file_cache.append(None)
-        self._res_title.configure(text=f"FINDINGS · {len(results)}")
+        self._res_title.configure(text=f"Findings · {len(results)}")
         self._update_total()
 
     def _select_all(self, state: bool):
@@ -539,12 +537,22 @@ class CleanupTool(ctk.CTkFrame):
         count = sum(1 for v in self._row_vars if v.get())
         if count:
             self._total_lbl.configure(
-                text=f"  {count:>2} selected   →   {fmt_size(total)}",
+                text=f"{count} selected · {fmt_size(total)}",
                 text_color=INK)
-            self._del_btn.configure(state="normal")
+            # Destructive red only when the action is actually available,
+            # and the label says what it will do (action + object).
+            self._del_btn.configure(state="normal",
+                                     fg_color=RED_BTN, hover_color=RED_BTN_H,
+                                     text_color=ON_ACCENT,
+                                     text=f"Delete {fmt_size(total)}")
         else:
             self._total_lbl.configure(text="No selection", text_color=INK_MUTE)
-            self._del_btn.configure(state="disabled")
+            # Neutral while there is nothing to delete — a full-red disabled
+            # button reads as alarming and clickable when it is neither.
+            self._del_btn.configure(state="disabled",
+                                     fg_color=BG_HOVER, hover_color=BG_HOVER,
+                                     text_color=INK_MUTE,
+                                     text="Delete selected")
 
     def _enumerate_files(self, result: ScanResult) -> tuple:
         files, total, errors = [], 0, 0
@@ -617,7 +625,7 @@ class CleanupTool(ctk.CTkFrame):
                      ).grid(row=0, column=0, columnspan=2, sticky="w", padx=8, pady=(4, 2))
 
         txt = tk.Text(frame, height=10, bg=BG_BASE, fg=INK_DIM,
-                      font=("Consolas", -int(round(12 * DPI_SCALE))), relief="flat", bd=0,
+                      font=(MONO_FAMILY, -int(round(12 * DPI_SCALE))), relief="flat", bd=0,
                       highlightthickness=0, selectbackground=ACCENT_DIM,
                       wrap="none", state="normal", cursor="arrow")
         vsb = tk.Scrollbar(frame, orient="vertical", command=txt.yview,

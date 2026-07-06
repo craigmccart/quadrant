@@ -5,39 +5,54 @@ import customtkinter as ctk
 
 # ── Design tokens ─────────────────────────────────────────────────────────────
 #
-# Identity: "instrument panel" — deep slate base, multiple saturated semantic
-# colours used purposefully (green for safe, amber for caution, red for danger,
-# cobalt for brand/action). High-contrast ink. Names kept stable so existing
-# widgets keep rendering without churn — only the values changed.
+# Identity: premium security-suite dark (Fortect reference). Deep desaturated
+# navy surfaces with layered depth, ONE consistent mint-green CTA everywhere
+# (a single green across all buttons is what reads premium; per-card rainbow
+# CTAs read AI-generated), cool blue-grey secondary text, and coloured glyphs
+# inside neutral dark badges. Names kept stable — only the values change.
 
-# Surfaces — deep slate with subtle hue, layered depth (3+ levels)
-BG_DEEP    = "#0d1117"   # app canvas
-BG_CARD    = "#161b22"   # panels
-BG_ROW     = "#1c232e"   # raised cards / rows
-BG_ROW_A   = "#262d3a"   # hover / second alt
-SIDEBAR_BG = "#0a0d12"   # sidebar (deepest)
-BORDER     = "#2a3140"   # hairline
-BORDER_HI  = "#3d4555"   # focus / strong divider
+# Surfaces — deep navy, cards one step lighter, quiet navy hairlines
+BG_DEEP    = "#161d2e"   # app canvas
+BG_CARD    = "#1f2739"   # panels / cards
+BG_ROW     = "#242e44"   # raised cards / rows / nested chips
+BG_ROW_A   = "#2a3550"   # hover / second alt
+SIDEBAR_BG = "#131927"   # sidebar (deepest)
+BORDER     = "#2b3550"   # hairline
+BORDER_HI  = "#3a4767"   # focus / strong divider / badge outlines
 
-# Ink — high contrast, slightly cool
-TEXT_MAIN  = "#f0f3f8"   # primary
-TEXT_DIM   = "#9da7b3"   # secondary
-TEXT_MUTE  = "#6b7484"   # tertiary
+# Ink — near-white headings, cool blue-grey body (Fortect's text ramp)
+TEXT_MAIN  = "#f2f5fa"   # primary
+TEXT_DIM   = "#9aa5bd"   # secondary
+TEXT_MUTE  = "#67718c"   # tertiary
 
-# Brand — cobalt blue. Reads as Windows-native + professional tool.
-ACCENT     = "#4d9eff"   # primary brand / action
-ACCENT_DIM = "#1f4d80"   # pressed / border
-ACCENT_SOFT = "#0e2640"  # active item bg tint
+# Brand/CTA — Fortect mint green. THE action colour: every primary button,
+# toggle, progress bar and the active-nav indicator use this one green.
+ACCENT     = "#3ddc84"   # primary action
+ACCENT_DIM = "#1d7a4b"   # pressed / checkbox borders
+ACCENT_SOFT = "#1a3328"  # active nav pill / selected rows (dark green tint)
+ACCENT_HOVER = "#2fc873" # primary button hover
+ON_ACCENT  = "#0b1526"   # dark navy text on mint (Spotify/WhatsApp pattern)
 
-# Semantic — saturated, visible at a glance
-GREEN      = "#5ed590"   # safe / success / OK
-ORANGE     = "#f0b340"   # warning (now distinct from brand)
-ORANGE_SOFT = "#3a2c10"  # warning bg tint
-RED_SOFT   = "#ff7070"   # danger inline (popping)
-RED_BTN    = "#c94545"   # destructive button
-RED_BTN_H  = "#e5605b"   # destructive hover
-INFO       = "#7eb6ff"   # info accent
-PURPLE     = "#b687f5"   # extra category accent (used sparingly)
+# Semantic — bright enough to read as text on navy
+GREEN      = "#3ddc84"   # safe / success (same family as ACCENT, intentional)
+ORANGE     = "#f5b84f"   # warning
+ORANGE_SOFT = "#3a2d12"  # warning bg tint
+RED_SOFT   = "#ff6b6b"   # danger inline
+RED_BTN    = "#d64545"   # destructive button
+RED_BTN_H  = "#e25e5e"   # destructive hover (brightens — dark-theme rule)
+INFO       = "#62a6ff"   # informational blue (Fortect's icon blue)
+PURPLE     = "#a78bfa"   # AI features only, used sparingly
+
+# Dark tints per accent — icon-badge / risk-badge backgrounds
+TINT = {
+    ACCENT: "#143323", GREEN: "#143323", ORANGE: "#3a2d12",
+    PURPLE: "#272040", INFO: "#16283e", RED_SOFT: "#3a1a1a",
+}
+# Hover for filled colour buttons
+HOVER_DARK = {
+    ACCENT: "#2fc873", GREEN: "#2fc873", ORANGE: "#d99c2c",
+    PURPLE: "#8f6fe8", INFO: "#4a8fe8", RED_SOFT: "#e25e5e",
+}
 
 # Aliases (semantic re-export)
 BG_BASE     = BG_DEEP
@@ -52,10 +67,10 @@ OK          = GREEN
 WARN        = ORANGE
 DANGER      = RED_SOFT
 
-# Geometry — small rounding (utility tool feel, not consumer app)
-R_SHARP     = 3
-R_BASE      = 5
-R_LARGE     = 8
+# Geometry — softer rounding (premium suite feel, Fortect reference)
+R_SHARP     = 4
+R_BASE      = 8
+R_LARGE     = 10
 
 # Icon glyphs (Segoe UI Symbol / Segoe MDL2 Assets compatible — Windows native)
 # Single-character symbols that render reliably on Windows. Keep this small.
@@ -129,5 +144,9 @@ def F_BODY():    return _font(13)
 def F_BODY_B():  return _font(13, "bold")
 def F_SMALL():   return _font(12)
 def F_MICRO():   return _font(11)
-def F_MONO(s=13):return _font(s, "normal", "Cascadia Mono")
-def F_MONO_B(s=13):return _font(s, "bold", "Cascadia Mono")
+
+# Monospace family. Consolas ships on every Windows install; Cascadia Mono
+# does not, so on a clean machine it silently fell back to a proportional font.
+MONO_FAMILY = "Consolas"
+def F_MONO(s=13):return _font(s, "normal", MONO_FAMILY)
+def F_MONO_B(s=13):return _font(s, "bold", MONO_FAMILY)

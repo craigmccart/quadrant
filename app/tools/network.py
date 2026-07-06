@@ -7,7 +7,8 @@ import threading
 
 import customtkinter as ctk
 
-from app.theme import _font, ACCENT, GREEN, INFO, INK_DIM, INK_MUTE, R_BASE
+from app.theme import (_font, ACCENT, ACCENT_HOVER, ON_ACCENT, GREEN, INFO,
+                       INK, INK_DIM, INK_MUTE, R_BASE)
 from app.widgets import make_page_header, make_tree, Tile
 
 
@@ -32,28 +33,29 @@ class NetworkTool(ctk.CTkFrame):
         actions.grid(row=2, column=0, sticky="ew", pady=(0, 12))
         ctk.CTkButton(actions, text="Refresh",
                       width=100, height=34, font=_font(11, "bold"),
-                      fg_color=ACCENT, hover_color="#3a8aef",
-                      text_color="#0a1322", corner_radius=R_BASE,
+                      fg_color=ACCENT, hover_color=ACCENT_HOVER,
+                      text_color=ON_ACCENT, corner_radius=R_BASE,
                       command=self._load).pack(side="left")
         self._status = ctk.CTkLabel(actions, text="Click Refresh to load connections.",
                                      font=_font(11), text_color=INK_DIM)
         self._status.pack(side="left", padx=14)
 
-        # Summary tiles
-        tile_row = ctk.CTkFrame(self, fg_color="transparent")
-        tile_row.grid(row=3, column=0, sticky="ew", pady=(0, 12))
-
-        self._tile_total = Tile(tile_row, "Total connections", accent=INFO)
-        self._tile_total.kpi("—", "click Refresh", value_size=20)
-        self._tile_total.frame.pack(fill="x", pady=(0, 6))
-
-        self._tile_est = Tile(tile_row, "Established", accent=GREEN)
-        self._tile_est.kpi("—", "TCP traffic flowing", value_size=20)
-        self._tile_est.frame.pack(fill="x", pady=(0, 6))
-
-        self._tile_listen = Tile(tile_row, "Listening", accent=ACCENT)
-        self._tile_listen.kpi("—", "open ports awaiting clients", value_size=20)
-        self._tile_listen.frame.pack(fill="x", pady=(0, 6))
+        # Compact 3-up stat strip inside ONE card (density over hero tiles)
+        strip = Tile(self, "Connections")
+        strip.frame.grid(row=3, column=0, sticky="ew", pady=(0, 12))
+        self._stat_lbls = {}
+        for i, (key, label) in enumerate([("total", "Total"),
+                                          ("est", "Established"),
+                                          ("listen", "Listening")]):
+            strip.body.grid_columnconfigure(i, weight=1, uniform="net")
+            col = ctk.CTkFrame(strip.body, fg_color="transparent")
+            col.grid(row=0, column=i, sticky="w")
+            val = ctk.CTkLabel(col, text="–", font=_font(20, "bold"),
+                               text_color=INK, anchor="w")
+            val.pack(anchor="w")
+            ctk.CTkLabel(col, text=label, font=_font(11),
+                         text_color=INK_DIM, anchor="w").pack(anchor="w")
+            self._stat_lbls[key] = val
 
         # Table
         tree_frame, self._tree = make_tree(self, [
@@ -131,12 +133,8 @@ class NetworkTool(ctk.CTkFrame):
                 tag = "time_wait"
             self._tree.insert("", "end", values=(proto, local, remote, state, pid, proc),
                              tags=(tag,) if tag else ())
-        self._status.configure(text=f"{len(connections)} active connections",
-                                text_color=INK_DIM)
-        # Update summary tiles
-        self._tile_total.value_lbl.configure(text=str(len(connections)))
-        self._tile_total.sub_lbl.configure(text="TCP + UDP")
-        self._tile_est.value_lbl.configure(text=str(est_count))
-        self._tile_est.sub_lbl.configure(text="TCP traffic flowing")
-        self._tile_listen.value_lbl.configure(text=str(listen_count))
-        self._tile_listen.sub_lbl.configure(text="open ports")
+        # Count lives in the stat strip only — no duplicate next to Refresh.
+        self._status.configure(text="Up to date.", text_color=INK_DIM)
+        self._stat_lbls["total"].configure(text=str(len(connections)))
+        self._stat_lbls["est"].configure(text=str(est_count))
+        self._stat_lbls["listen"].configure(text=str(listen_count))

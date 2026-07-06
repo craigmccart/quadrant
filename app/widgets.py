@@ -4,7 +4,7 @@ import customtkinter as ctk
 import tkinter as tk
 from tkinter import ttk
 
-from app.theme import (
+from app.theme import (ACCENT_HOVER, BORDER_HI, HOVER_DARK, ON_ACCENT, TINT, 
     _font, _px, ACCENT, ACCENT_SOFT, BG_BASE, BG_CARD, BG_DEEP, BG_HOVER, BG_PANEL,
     BG_RAISED, BORDER, GREEN, INFO, INK, INK_DIM, INK_MUTE, ORANGE, PURPLE, R_BASE,
     R_LARGE, RED_SOFT,
@@ -28,6 +28,9 @@ def _setup_treeview_style():
     style.configure("Dark.Treeview",
                     background=BG_BASE, foreground=INK,
                     fieldbackground=BG_BASE, borderwidth=0,
+                    # clam draws a light/dark bevel around the widget — flatten
+                    # it to the surface colours so no pale rim shows on navy.
+                    lightcolor=BG_CARD, darkcolor=BG_CARD, bordercolor=BORDER,
                     font=("Segoe UI", -_px(11)), rowheight=_px(30))
     style.configure("Dark.Treeview.Heading",
                     background=BG_PANEL, foreground=INK_DIM,
@@ -42,22 +45,28 @@ def _setup_treeview_style():
               foreground=[("active", INK)])
 
 def make_tree(parent, columns: list[tuple[str, int]], height: int = 20) -> tuple[ctk.CTkFrame, ttk.Treeview]:
-    """Create a dark-themed Treeview with scrollbar. columns = [(name, width), ...]"""
-    frame = ctk.CTkFrame(parent, fg_color="transparent")
+    """Create a themed Treeview inside a bordered card. columns = [(name, width), ...]
+
+    Uses CTkScrollbar (theme-aware) — native tk.Scrollbar ignores bg colours on
+    Windows and renders a glaring white strip on dark surfaces."""
+    frame = ctk.CTkFrame(parent, fg_color=BG_CARD, corner_radius=R_BASE,
+                         border_width=1, border_color=BORDER)
     col_ids = [c[0] for c in columns]
     tree = ttk.Treeview(frame, columns=col_ids, show="headings",
                         style="Dark.Treeview", selectmode="extended", height=height)
-    vsb = tk.Scrollbar(frame, orient="vertical", command=tree.yview,
-                       bg=BG_CARD, troughcolor=BG_DEEP, bd=0, width=10)
-    hsb = tk.Scrollbar(frame, orient="horizontal", command=tree.xview,
-                       bg=BG_CARD, troughcolor=BG_DEEP, bd=0, width=10)
+    vsb = ctk.CTkScrollbar(frame, orientation="vertical", command=tree.yview,
+                           fg_color="transparent",
+                           button_color=BG_HOVER, button_hover_color=BORDER_HI)
+    hsb = ctk.CTkScrollbar(frame, orientation="horizontal", command=tree.xview,
+                           fg_color="transparent",
+                           button_color=BG_HOVER, button_hover_color=BORDER_HI)
     tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
     for name, width in columns:
         tree.heading(name, text=name, command=lambda c=name: treeview_sort(tree, c))
         tree.column(name, width=width, minwidth=50)
-    tree.grid(row=0, column=0, sticky="nsew")
-    vsb.grid(row=0, column=1, sticky="ns")
-    hsb.grid(row=1, column=0, sticky="ew")
+    tree.grid(row=0, column=0, sticky="nsew", padx=(10, 0), pady=10)
+    vsb.grid(row=0, column=1, sticky="ns", pady=10)
+    hsb.grid(row=1, column=0, sticky="ew", padx=(10, 0))
     frame.grid_columnconfigure(0, weight=1)
     frame.grid_rowconfigure(0, weight=1)
     return frame, tree
@@ -78,8 +87,8 @@ def make_page_header(parent, title: str, subtitle: str = "",
         ctk.CTkButton(hdr, text=action_text,
                       width=_px(100), height=_px(34),
                       font=_font(11, "bold", "Segoe UI"),
-                      fg_color=ACCENT, hover_color="#3a8aef",
-                      text_color="#0a1322", corner_radius=R_BASE,
+                      fg_color=ACCENT, hover_color=ACCENT_HOVER,
+                      text_color=ON_ACCENT, corner_radius=R_BASE,
                       command=action_cmd
                       ).pack(side="right", padx=(8, 0), pady=8)
     if secondary_text:
@@ -153,9 +162,9 @@ class Tile:
             ctk.CTkFrame(header, fg_color=accent,
                          width=8, height=8, corner_radius=4
                          ).pack(side="left", padx=(0, 8))
-        ctk.CTkLabel(header, text=title.upper(),
-                     font=_font(9, "bold", "Cascadia Mono"),
-                     text_color=INK_MUTE
+        ctk.CTkLabel(header, text=title,
+                     font=_font(11, "bold", "Segoe UI"),
+                     text_color=INK_DIM
                      ).pack(side="left")
 
         # Body — caller adds content here
@@ -217,32 +226,38 @@ class ActionCard:
                  title: str, description: str,
                  button_text: str, command,
                  button_colour: str = None):
-        button_colour = button_colour or ACCENT
-        self.frame = ctk.CTkFrame(parent, fg_color=BG_RAISED,
+        # Fortect card anatomy: title top-left, icon badge top-right,
+        # blue-grey description, ONE mint-green pill CTA bottom-left.
+        # button_colour is accepted for compatibility but ignored — every CTA
+        # is the same green; per-card rainbow buttons read AI-generated.
+        self.frame = ctk.CTkFrame(parent, fg_color=BG_CARD,
                                    corner_radius=R_LARGE,
                                    border_width=1, border_color=BORDER)
 
-        # Icon chip on its own line (gives the title the full card width)
-        chip = ctk.CTkFrame(self.frame, fg_color=self._tint(icon_colour),
-                            width=48, height=48, corner_radius=R_BASE)
-        chip.pack(anchor="w", padx=20, pady=(20, 0))
-        chip.pack_propagate(False)
-        ctk.CTkLabel(chip, text=icon,
-                     font=_font(22, "normal", "Segoe UI"),
+        # Header row: title left, badge right
+        top = ctk.CTkFrame(self.frame, fg_color="transparent")
+        top.pack(fill="x", padx=20, pady=(18, 0))
+
+        badge = ctk.CTkFrame(top, fg_color=self._tint(icon_colour),
+                             width=46, height=46, corner_radius=R_BASE,
+                             border_width=1, border_color=BORDER_HI)
+        badge.pack(side="right", anchor="n")
+        badge.pack_propagate(False)
+        ctk.CTkLabel(badge, text=icon,
+                     font=_font(20, "normal", "Segoe UI"),
                      text_color=icon_colour).pack(expand=True)
 
-        # Title + description. wraplength is set dynamically from the card's
-        # real width via <Configure> so text always fits regardless of DPI
-        # scaling or column width.
-        self._title_lbl = ctk.CTkLabel(self.frame, text=title,
-                     font=_font(17, "bold", "Segoe UI"),
+        self._title_lbl = ctk.CTkLabel(top, text=title,
+                     font=_font(16, "bold", "Segoe UI"),
                      text_color=INK, anchor="w", justify="left", wraplength=200)
-        self._title_lbl.pack(anchor="w", fill="x", padx=20, pady=(12, 0))
+        self._title_lbl.pack(side="left", anchor="n", pady=(6, 0))
 
+        # Description. wraplength set dynamically from the card's real width
+        # via <Configure> so text always fits regardless of DPI/column width.
         self._desc_lbl = ctk.CTkLabel(self.frame, text=description,
                      font=_font(12, "normal", "Segoe UI"),
                      text_color=INK_DIM, anchor="w", justify="left", wraplength=200)
-        self._desc_lbl.pack(anchor="w", fill="x", padx=20, pady=(6, 0))
+        self._desc_lbl.pack(anchor="w", fill="x", padx=20, pady=(8, 0))
 
         self.frame.bind("<Configure>", self._on_resize)
 
@@ -250,14 +265,14 @@ class ActionCard:
         ctk.CTkFrame(self.frame, fg_color="transparent", height=4
                      ).pack(fill="both", expand=True)
 
-        # Big prominent button, full card width
+        # The one green CTA (compact pill, not full-width web-button)
         ctk.CTkButton(self.frame, text=button_text,
-                      font=_font(13, "bold", "Segoe UI"),
-                      height=46, corner_radius=R_BASE,
-                      fg_color=button_colour, hover_color=self._darken(button_colour),
-                      text_color="#0a1322",
+                      font=_font(12, "bold", "Segoe UI"),
+                      width=150, height=38, corner_radius=R_BASE,
+                      fg_color=ACCENT, hover_color=ACCENT_HOVER,
+                      text_color=ON_ACCENT,
                       command=command
-                      ).pack(fill="x", padx=20, pady=(16, 20))
+                      ).pack(anchor="w", padx=20, pady=(16, 20))
 
     def _on_resize(self, event):
         # event.width is in scaled tk pixels; CTk multiplies wraplength by the
@@ -266,26 +281,20 @@ class ActionCard:
             scale = ctk.ScalingTracker.get_widget_scaling(self.frame)
         except Exception:
             scale = 1.0
-        wrap = max(120, int(event.width / scale) - 40)
-        self._title_lbl.configure(wraplength=wrap)
-        self._desc_lbl.configure(wraplength=wrap)
+        inner = max(120, int(event.width / scale) - 40)
+        # The title shares its row with the 46px badge + gap
+        self._title_lbl.configure(wraplength=max(100, inner - 62))
+        self._desc_lbl.configure(wraplength=inner)
 
     @staticmethod
     def _tint(hex_colour: str) -> str:
-        """A very dark tint of the accent for the icon chip background."""
-        tints = {
-            ACCENT: "#13243a", GREEN: "#13301f", ORANGE: "#322611",
-            PURPLE: "#241733", INFO: "#16273d", RED_SOFT: "#331717",
-        }
-        return tints.get(hex_colour, BG_PANEL)
+        """Pale pastel chip background for an accent (see theme.TINT)."""
+        return TINT.get(hex_colour, BG_PANEL)
 
     @staticmethod
     def _darken(hex_colour: str) -> str:
-        darks = {
-            ACCENT: "#3a8aef", GREEN: "#4cbb78", ORANGE: "#d99c2c",
-            PURPLE: "#9f6fe0", INFO: "#5a9be0", RED_SOFT: "#e5605b",
-        }
-        return darks.get(hex_colour, hex_colour)
+        """Hover for filled buttons (see theme.HOVER_DARK)."""
+        return HOVER_DARK.get(hex_colour, hex_colour)
 
     def grid(self, **kwargs):  return self.frame.grid(**kwargs)
     def pack(self, **kwargs):  return self.frame.pack(**kwargs)

@@ -39,18 +39,18 @@ from app.tools.home import HomeTool
 # Order within each group is the order they appear.
 # HomeTool is special-cased (needs a navigate callback) and added separately.
 TOOL_SECTIONS = [
-    ("SYSTEM", [
+    ("System", [
         ("Home",         HomeTool),
         ("Overview",     SystemInfoTool),
         ("Disk Map",     DiskTool),
     ]),
-    ("CLEANUP", [
+    ("Clean up", [
         ("Cleanup",      CleanupTool),
         ("Duplicates",   DuplicateTool),
         ("Large Files",  LargeFileTool),
         ("Privacy",      PrivacyTool),
     ]),
-    ("INSPECT", [
+    ("Inspect", [
         ("Programs",     ProgramsTool),
         ("Startup",      StartupTool),
         ("Tasks",        TasksTool),
@@ -126,20 +126,17 @@ class WinScanApp(ctk.CTk):
         brand = ctk.CTkFrame(sidebar, fg_color="transparent")
         brand.grid(row=0, column=0, sticky="ew", pady=(16, 14), padx=(14, 14))
 
-        stripe = ctk.CTkFrame(brand, fg_color=ACCENT, width=3,
-                               height=38, corner_radius=2)
-        stripe.pack(side="left", padx=(0, 12))
-        stripe.pack_propagate(False)
-
+        # No accent stripe — the bold wordmark alone is enough (a coloured
+        # edge strip beside the brand is the AI left-border tell relocated).
         text_col = ctk.CTkFrame(brand, fg_color="transparent")
         text_col.pack(side="left", fill="x", expand=True)
         ctk.CTkLabel(text_col, text="WinScan",
                      font=_font(18, "bold", "Segoe UI"),
                      text_color=INK, anchor="w"
                      ).pack(anchor="w")
-        ctk.CTkLabel(text_col, text="SYSTEM TOOLKIT",
-                     font=_font(8, "bold", "Cascadia Mono"),
-                     text_color=ACCENT, anchor="w"
+        ctk.CTkLabel(text_col, text="System toolkit",
+                     font=_font(10, "normal", "Segoe UI"),
+                     text_color=INK_DIM, anchor="w"
                      ).pack(anchor="w", pady=(2, 0))
 
         # Hairline divider
@@ -158,7 +155,7 @@ class WinScanApp(ctk.CTk):
                           padx=(18, 14), pady=(12, 6))
             sec_row.grid_columnconfigure(1, weight=1)
             ctk.CTkLabel(sec_row, text=section_name,
-                         font=_font(8, "bold", "Cascadia Mono"),
+                         font=_font(11, "bold", "Segoe UI"),
                          text_color=INK_MUTE, anchor="w"
                          ).grid(row=0, column=0, sticky="w")
             # subtle right-hairline
@@ -205,23 +202,25 @@ class WinScanApp(ctk.CTk):
         statusbar = ctk.CTkFrame(self, fg_color=BG_PANEL, corner_radius=0)
         statusbar.grid(row=2, column=1, sticky="ew")
 
+        # One family throughout (Segoe UI) — monospace status text was the
+        # dark terminal theme leaking through the re-skin.
         self._status_left = ctk.CTkLabel(statusbar, text="Ready",
-                                          font=_font(9, "normal"),
+                                          font=_font(11, "normal", "Segoe UI"),
                                           text_color=INK_DIM, anchor="w")
         self._status_left.pack(side="left", padx=14, pady=5)
 
         self._status_clock = ctk.CTkLabel(statusbar, text="",
-                                           font=_font(9, "normal", "Cascadia Mono"),
+                                           font=_font(11, "normal", "Segoe UI"),
                                            text_color=INK_MUTE)
         self._status_clock.pack(side="right", padx=(8, 14), pady=5)
 
         self._status_ram = ctk.CTkLabel(statusbar, text="",
-                                         font=_font(9, "normal", "Cascadia Mono"),
+                                         font=_font(11, "normal", "Segoe UI"),
                                          text_color=INK_DIM)
         self._status_ram.pack(side="right", padx=10, pady=5)
 
         self._status_disk = ctk.CTkLabel(statusbar, text="",
-                                          font=_font(9, "normal", "Cascadia Mono"),
+                                          font=_font(11, "normal", "Segoe UI"),
                                           text_color=INK_DIM)
         self._status_disk.pack(side="right", padx=10, pady=5)
 

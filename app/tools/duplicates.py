@@ -8,9 +8,9 @@ import threading
 import customtkinter as ctk
 from tkinter import filedialog
 
-from app.theme import (
+from app.theme import (ACCENT_HOVER, ON_ACCENT, 
     _font, ACCENT, BG_HOVER, BG_PANEL, BG_RAISED, BORDER, INK, INK_DIM, INK_MUTE,
-    PURPLE, R_BASE,
+    MONO_FAMILY, PURPLE, R_BASE,
 )
 from app.helpers import expand, fmt_size
 from app.widgets import make_page_header, make_tree, Tile
@@ -38,8 +38,8 @@ class DuplicateTool(ctk.CTkFrame):
         actions.grid(row=2, column=0, sticky="ew", pady=(0, 12))
         self._scan_btn = ctk.CTkButton(actions, text="Find duplicates",
                       width=140, height=34, font=_font(11, "bold"),
-                      fg_color=ACCENT, hover_color="#3a8aef",
-                      text_color="#0a1322", corner_radius=R_BASE,
+                      fg_color=ACCENT, hover_color=ACCENT_HOVER,
+                      text_color=ON_ACCENT, corner_radius=R_BASE,
                       command=self._start_scan)
         self._scan_btn.pack(side="left")
         self._status = ctk.CTkLabel(actions,
@@ -59,7 +59,7 @@ class DuplicateTool(ctk.CTkFrame):
 
         ctk.CTkLabel(ctrl, text="folder", font=_font(10),
                      text_color=INK_MUTE).grid(row=0, column=0, padx=(0, 8))
-        self._path_entry = ctk.CTkEntry(ctrl, height=32, font=_font(11, "normal", "Cascadia Mono"),
+        self._path_entry = ctk.CTkEntry(ctrl, height=32, font=_font(11, "normal", MONO_FAMILY),
                                          fg_color=BG_PANEL, border_color=BORDER,
                                          text_color=INK, corner_radius=R_BASE)
         self._path_entry.insert(0, str(expand(r"%USERPROFILE%")))

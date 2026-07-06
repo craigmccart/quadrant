@@ -4,7 +4,7 @@ import winreg
 
 import customtkinter as ctk
 
-from app.theme import _font, ACCENT, BG_PANEL, BORDER, INFO, INK, INK_DIM, R_BASE
+from app.theme import _font, ACCENT, ACCENT_HOVER, ON_ACCENT, BG_PANEL, BORDER, INFO, INK, INK_DIM, R_BASE
 from app.helpers import fmt_size
 from app.widgets import make_page_header, make_tree, Tile
 
@@ -31,8 +31,8 @@ class ProgramsTool(ctk.CTkFrame):
         actions.grid(row=2, column=0, sticky="ew", pady=(0, 12))
         ctk.CTkButton(actions, text="Refresh",
                       width=100, height=34, font=_font(11, "bold"),
-                      fg_color=ACCENT, hover_color="#3a8aef",
-                      text_color="#0a1322", corner_radius=R_BASE,
+                      fg_color=ACCENT, hover_color=ACCENT_HOVER,
+                      text_color=ON_ACCENT, corner_radius=R_BASE,
                       command=self._load).pack(side="left")
         self._status = ctk.CTkLabel(actions, text="Reading registry…",
                                      font=_font(11), text_color=INK_DIM)

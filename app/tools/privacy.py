@@ -7,7 +7,7 @@ import winreg
 import customtkinter as ctk
 from tkinter import messagebox
 
-from app.theme import (
+from app.theme import (ACCENT_HOVER, ON_ACCENT, 
     _font, ACCENT, ACCENT_DIM, BG_HOVER, BG_RAISED, BORDER, F_BODY_B, F_MONO_B,
     F_SMALL, INK, INK_DIM, INK_MUTE, ORANGE, R_BASE, R_SHARP, RED_BTN, RED_BTN_H,
 )
@@ -51,8 +51,8 @@ class PrivacyTool(ctk.CTkFrame):
         actions.grid(row=2, column=0, sticky="ew", pady=(0, 12))
         ctk.CTkButton(actions, text="Scan sizes",
                       width=120, height=34, font=_font(11, "bold"),
-                      fg_color=ACCENT, hover_color="#3a8aef",
-                      text_color="#0a1322", corner_radius=R_BASE,
+                      fg_color=ACCENT, hover_color=ACCENT_HOVER,
+                      text_color=ON_ACCENT, corner_radius=R_BASE,
                       command=self._scan).pack(side="left")
         self._status = ctk.CTkLabel(actions,
                                      text="Click Scan sizes to enumerate privacy data.",
@@ -77,7 +77,7 @@ class PrivacyTool(ctk.CTkFrame):
         self._sweep_btn = ctk.CTkButton(act, text="Sweep selected",
                                          width=140, height=34,
                                          fg_color=RED_BTN, hover_color=RED_BTN_H,
-                                         text_color="#ffffff", corner_radius=R_BASE,
+                                         text_color=ON_ACCENT, corner_radius=R_BASE,
                                          font=_font(11, "bold"),
                                          command=self._sweep, state="disabled")
         self._sweep_btn.pack(side="right")
