@@ -1,0 +1,31 @@
+[package]
+name = "quadrant"
+description = "Quadrant desktop app shell (Tauri)."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[lib]
+name = "quadrant_app"
+crate-type = ["rlib"]
+
+[[bin]]
+name = "Quadrant"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# custom-protocol = always serve the embedded ui/ folder, so a plain
+# `cargo build` gives a working portable EXE without the Tauri CLI.
+tauri = { version = "2", features = ["custom-protocol"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rfd = "0.15"
+quadrant-core = { path = "../crates/core" }
+
+[dependencies.windows]
+version = "0.62"
+features = ["Win32_Foundation", "Win32_Graphics_Dwm"]

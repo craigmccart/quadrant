@@ -1,0 +1,410 @@
+/* Layout for the tool pages: Duplicates, Disk Map, Security, System,
+   Settings. Health Check and the cleaner are in pages.css. */
+
+/* Chart colours for the Disk Map "by type" bar. A fixed colour per file kind,
+   checked for colour-blind separation on the surface of each theme. They are
+   never used for status, and the legend always names each one. */
+:root,
+:root[data-theme="dark"] {
+  --kind-video: #3987e5;
+  --kind-images: #d95926;
+  --kind-archives: #199e70;
+  --kind-apps: #c98500;
+  --kind-documents: #d55181;
+  --kind-code: #008300;
+  --kind-audio: #9085e9;
+  --kind-system: #e66767;
+  --kind-other: #5d6b76;
+}
+:root[data-theme="light"] {
+  --kind-video: #2a78d6;
+  --kind-images: #eb6834;
+  --kind-archives: #1baf7a;
+  --kind-apps: #eda100;
+  --kind-documents: #e87ba4;
+  --kind-code: #008300;
+  --kind-audio: #6250d6;
+  --kind-system: #e34948;
+  --kind-other: #9aa7b0;
+}
+
+/* ── Duplicates ─────────────────────────────────────────────────────────── */
+
+.dup-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+.dup-group {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+.dup-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4) var(--s3) var(--s5);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.dup-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: text;
+}
+.dup-meta {
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+.dup-files li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto 64px auto;
+  align-items: center;
+  gap: var(--s4);
+  padding: 8px var(--s3) 8px var(--s5);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+.dup-files li:first-child {
+  border-top: 0;
+}
+.dup-path {
+  min-width: 0;
+  word-break: break-all;
+}
+.dup-fate {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--good);
+}
+.dup-files li.is-going .dup-fate {
+  color: var(--warn);
+}
+.dup-files li.is-going .path {
+  text-decoration: line-through;
+  text-decoration-color: var(--fg-subtle);
+}
+.dup-more {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.lock {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  color: var(--fg-subtle);
+}
+.lock .icon {
+  width: 15px;
+  height: 15px;
+}
+
+/* ── Disk Map ───────────────────────────────────────────────────────────── */
+
+.drive-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--s3);
+  margin-bottom: var(--s4);
+}
+.drive-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: inherit;
+  text-align: left;
+  transition: border-color var(--fast), background var(--fast);
+}
+.drive-card:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+.drive-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.drive-card .drive-top {
+  margin-bottom: 0;
+}
+.drive-card-foot {
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+.drive-card.pick {
+  flex-direction: row;
+  align-items: center;
+  border-style: dashed;
+  border-color: var(--border-strong);
+  color: var(--fg-muted);
+  font-weight: 600;
+}
+.drive-card.pick .icon {
+  color: var(--accent);
+}
+
+.typebar {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  margin: var(--s4) 0 var(--s3);
+}
+.typebar span {
+  flex: var(--share) 0 0;
+  min-width: 3px;
+  border-radius: 3px;
+  background: var(--c);
+}
+.typelegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s5);
+  font-size: var(--text-sm);
+}
+.typelegend li {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+.typelegend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--c);
+}
+.typelegend b {
+  font-weight: 650;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+.crumbs button {
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--accent);
+}
+.crumbs button:hover {
+  background: var(--accent-soft);
+}
+.crumbs .here {
+  padding: 3px 6px;
+  color: var(--fg);
+  font-weight: 700;
+}
+.crumbs .sep {
+  color: var(--fg-subtle);
+}
+
+.dir-list {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+.dir-row {
+  display: grid;
+  grid-template-columns: 20px minmax(140px, 1.2fr) minmax(80px, 1fr) 92px 52px 96px 34px;
+  align-items: center;
+  gap: var(--s4);
+  padding: 7px var(--s3) 7px var(--s4);
+  border-top: 1px solid var(--border);
+  font-size: 0.9375rem;
+}
+.dir-row:first-child {
+  border-top: 0;
+}
+.dir-row.can-open {
+  cursor: pointer;
+}
+.dir-row.can-open:hover {
+  background: var(--surface-2);
+}
+.dir-row > .icon {
+  color: var(--fg-subtle);
+}
+.dir-row.can-open > .icon {
+  color: var(--accent);
+}
+.dir-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dir-size {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+.dir-pct,
+.dir-files {
+  text-align: right;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+
+/* ── Security ───────────────────────────────────────────────────────────── */
+
+.check-list {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+.check-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s4) var(--s5);
+  border-top: 1px solid var(--border);
+}
+.check-row:first-child {
+  border-top: 0;
+}
+.check-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--neutral-soft);
+  color: var(--fg-subtle);
+}
+.check-mark.good {
+  background: var(--good-soft);
+  color: var(--good);
+}
+.check-mark.attention {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.check-mark.problem {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+.check-label {
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+.check-summary {
+  font-weight: 700;
+}
+.check-detail {
+  margin-top: 2px;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  max-width: 76ch;
+}
+
+/* ── System ─────────────────────────────────────────────────────────────── */
+
+.system-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--s4);
+  align-items: start;
+}
+.live {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+}
+.live-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--s2);
+}
+.live-value {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-xl);
+  letter-spacing: -0.02em;
+}
+.live .meter-fill {
+  transition: width 600ms var(--ease-out);
+}
+
+/* ── Settings ───────────────────────────────────────────────────────────── */
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  max-width: 820px;
+}
+.setting {
+  display: flex;
+  align-items: center;
+  gap: var(--s5);
+  padding: var(--s4) var(--s5);
+  border-top: 1px solid var(--border);
+}
+.panel-head + .setting {
+  border-top: 0;
+}
+.setting-text {
+  flex: 1;
+  min-width: 0;
+}
+.setting-name {
+  font-weight: 650;
+}
+.setting-help {
+  margin-top: 2px;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  max-width: 62ch;
+}
+.setting-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s3);
+}
+.key-row {
+  display: flex;
+  gap: var(--s2);
+}
+.key-row .input {
+  flex: 1;
+}
+.credits {
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+.credits li + li {
+  margin-top: 4px;
+}
+
+@media (max-width: 1040px) {
+  .system-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dir-row {
+    grid-template-columns: 20px minmax(120px, 1.4fr) minmax(60px, 1fr) 88px 48px 34px;
+  }
+  .dir-files {
+    display: none;
+  }
+}

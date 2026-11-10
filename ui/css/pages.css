@@ -1,0 +1,586 @@
+/* Layout that belongs to one page. Shared pieces are in components.css. */
+
+/* ── Brand mark ─────────────────────────────────────────────────────────── */
+
+.brand-mark path {
+  stroke: var(--accent);
+}
+.brand-mark .mark-b {
+  opacity: 0.72;
+}
+.brand-mark .mark-c {
+  opacity: 0.48;
+}
+.brand-mark .mark-d {
+  opacity: 0.28;
+}
+.brand-mark .mark-dot {
+  fill: var(--fg);
+}
+
+/* ── Health Check: hero ─────────────────────────────────────────────────── */
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s7);
+  padding: var(--s6) var(--s7);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: hidden;
+  isolation: isolate;
+}
+/* A dot grid that fades out towards the text: instrument-panel texture. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(var(--grid-dot) 1.2px, transparent 1.2px);
+  background-size: 18px 18px;
+  mask-image: linear-gradient(100deg, #000 0%, #000 28%, transparent 62%);
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: -120px;
+  top: -160px;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--glow), transparent);
+}
+
+.hero-headline {
+  margin-top: var(--s2);
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-3xl);
+  line-height: 1.08;
+  letter-spacing: -0.028em;
+  max-width: 17ch;
+  text-wrap: balance;
+}
+.hero-sub {
+  margin-top: var(--s3);
+  max-width: 54ch;
+  color: var(--fg-muted);
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin-top: var(--s5);
+}
+.hero-progress {
+  margin-top: var(--s5);
+  max-width: 460px;
+}
+.hero-progress-text {
+  margin-bottom: var(--s2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hero[data-state="scanning"] .hero-actions {
+  margin-top: var(--s4);
+}
+
+/* ── Health Check: the dial ─────────────────────────────────────────────── */
+
+.dial {
+  position: relative;
+  width: 15rem;
+  height: 15rem;
+  flex: none;
+}
+.dial-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.dial-ticks {
+  stroke: var(--border-strong);
+  stroke-width: 5;
+  opacity: 0.7;
+}
+.dial-track {
+  stroke: var(--track);
+  stroke-width: 13;
+  stroke-linecap: round;
+}
+.dial-value {
+  stroke: var(--fg-subtle);
+  stroke-width: 13;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 950ms var(--ease-out), stroke var(--medium), stroke-width var(--fast);
+}
+.dial-hit {
+  stroke: transparent;
+  stroke-width: 36;
+  pointer-events: stroke;
+}
+.dial-arc {
+  transition: opacity var(--fast);
+}
+.dial-arc[data-status="good"] .dial-value {
+  stroke: var(--good);
+}
+.dial-arc[data-status="attention"] .dial-value {
+  stroke: var(--warn);
+}
+.dial-arc[data-status="problem"] .dial-value {
+  stroke: var(--bad);
+}
+
+/* Hovering a pillar lights its arc and quietens the others. */
+.dial[data-focus] .dial-arc {
+  opacity: 0.32;
+}
+.dial[data-focus="space"] .dial-arc[data-pillar="space"],
+.dial[data-focus="privacy"] .dial-arc[data-pillar="privacy"],
+.dial[data-focus="speed"] .dial-arc[data-pillar="speed"],
+.dial[data-focus="security"] .dial-arc[data-pillar="security"] {
+  opacity: 1;
+}
+.dial[data-focus="space"] .dial-arc[data-pillar="space"] .dial-value,
+.dial[data-focus="privacy"] .dial-arc[data-pillar="privacy"] .dial-value,
+.dial[data-focus="speed"] .dial-arc[data-pillar="speed"] .dial-value,
+.dial[data-focus="security"] .dial-arc[data-pillar="security"] .dial-value {
+  stroke-width: 16;
+}
+
+/* While checking, each arc breathes in turn, clockwise. */
+.dial[data-state="scanning"] .dial-value {
+  stroke: var(--accent);
+  transition: none;
+  animation: dial-sweep 1.8s ease-in-out infinite;
+}
+.dial[data-state="scanning"] .dial-arc:nth-of-type(2) .dial-value {
+  animation-delay: 0.22s;
+}
+.dial[data-state="scanning"] .dial-arc:nth-of-type(3) .dial-value {
+  animation-delay: 0.44s;
+}
+.dial[data-state="scanning"] .dial-arc:nth-of-type(4) .dial-value {
+  animation-delay: 0.66s;
+}
+@keyframes dial-sweep {
+  0%,
+  100% {
+    stroke-dashoffset: 100;
+  }
+  50% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.dial[data-state="stale"] .dial-svg {
+  opacity: 0.5;
+}
+.dial[data-state="stale"] .dial-number {
+  color: var(--fg-muted);
+}
+
+.dial-centre {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.dial-number {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-dial);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+.dial[data-state="scanning"] .dial-number {
+  font-size: 2.75rem;
+  letter-spacing: -0.03em;
+}
+.dial-label {
+  margin-top: 6px;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  color: var(--fg-muted);
+}
+.dial-label[data-status="good"] {
+  color: var(--good);
+}
+.dial-label[data-status="attention"] {
+  color: var(--warn);
+}
+.dial-label[data-status="problem"] {
+  color: var(--bad);
+}
+.dial[data-state="idle"] .dial-label,
+.dial[data-state="scanning"] .dial-label,
+.dial[data-state="stale"] .dial-label {
+  color: var(--fg-muted);
+}
+
+/* ── Health Check: the four pillars ─────────────────────────────────────── */
+
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+.pillar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s5);
+  border-left: 1px solid var(--border);
+  transition: background var(--fast);
+}
+.pillar:first-child {
+  border-left: 0;
+}
+.pillar:hover,
+.pillar.is-focus {
+  background: var(--surface-2);
+}
+.pillar-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 24px;
+}
+.pillar-icon {
+  color: var(--fg-subtle);
+}
+.pillar-label {
+  flex: 1;
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+.pillar-blurb {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+.pillar-figure {
+  display: flex;
+  flex-direction: column;
+}
+.pillar-headline {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: 2rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.pillar-caption {
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+.pillar-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-xs);
+}
+/* Label left, value right. A long value drops onto its own line. */
+.fact {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 var(--s3);
+}
+.fact dt {
+  color: var(--fg-muted);
+}
+.fact dd {
+  margin-left: auto;
+  font-weight: 650;
+  text-align: right;
+}
+.pillar.is-stale .pillar-figure,
+.pillar.is-stale .pillar-facts,
+.pillar.is-stale .chip {
+  opacity: 0.6;
+}
+
+/* ── Health Check: storage and history ──────────────────────────────────── */
+
+.home-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--s4);
+  margin-top: var(--s4);
+  align-items: start;
+}
+.drive-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+}
+.drive-top {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-bottom: var(--s2);
+}
+.drive-name {
+  font-weight: 700;
+}
+.drive-label {
+  margin-left: var(--s2);
+  font-weight: 400;
+  color: var(--fg-muted);
+}
+.drive-free {
+  margin-left: auto;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+
+.history-total {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.history-number {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: 2.5rem;
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+.history-unit {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-lg);
+  color: var(--fg-muted);
+}
+.history-caption {
+  width: 100%;
+  margin-top: 2px;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+.history-list {
+  margin-top: var(--s4);
+  border-top: 1px solid var(--border);
+}
+.history-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 var(--s3);
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: var(--text-sm);
+}
+.history-list li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.history-kind {
+  font-weight: 600;
+}
+.history-when {
+  grid-column: 1;
+  font-size: var(--text-xs);
+  color: var(--fg-subtle);
+}
+.history-freed {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 1220px) {
+  .pillars {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pillar:nth-child(odd) {
+    border-left: 0;
+  }
+  .pillar:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
+  .hero {
+    gap: var(--s6);
+    padding: var(--s6);
+  }
+}
+@media (max-width: 1040px) {
+  .dial {
+    width: 12.5rem;
+    height: 12.5rem;
+  }
+  .dial-number {
+    font-size: 3.5rem;
+  }
+  .hero-headline {
+    font-size: 2rem;
+  }
+  .home-lower {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Scan controls (duplicates, large files, disk map) ──────────────────── */
+
+.controls {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
+  margin-bottom: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.controls .field-grow {
+  flex: 1;
+  min-width: 260px;
+}
+.folder-field {
+  display: flex;
+  gap: var(--s2);
+}
+.folder-field .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+/* ── Junk Cleaner and Privacy ───────────────────────────────────────────── */
+
+.clean-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0 var(--s1) var(--s2);
+}
+.clean-list {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+.clean-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--s4);
+  padding: 14px var(--s4) 14px var(--s5);
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  transition: background var(--fast);
+}
+.clean-row:first-child {
+  border-top: 0;
+}
+.clean-row:hover {
+  background: var(--surface-2);
+}
+.clean-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px var(--s2);
+  font-weight: 650;
+}
+.clean-desc {
+  margin-top: 2px;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+.clean-size {
+  min-width: 96px;
+  text-align: right;
+  font-weight: 600;
+}
+.clean-count {
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: var(--fg-subtle);
+}
+.clean-row.is-zero .clean-main,
+.clean-row.is-zero .clean-size {
+  opacity: 0.55;
+}
+.clean-detail {
+  padding: var(--s3) var(--s5) var(--s4) 60px;
+  border-top: 1px dashed var(--border);
+  background: var(--bg);
+}
+.clean-detail > * + * {
+  margin-top: var(--s3);
+}
+.clean-note {
+  display: flex;
+  gap: var(--s2);
+  align-items: flex-start;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+.clean-note .icon {
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+  color: var(--info);
+}
+.file-list {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+.file-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 84px auto;
+  align-items: center;
+  gap: var(--s4);
+  padding: 4px var(--s2) 4px var(--s3);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-xs);
+}
+.file-list li:first-child {
+  border-top: 0;
+}
+.file-list .path {
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-list .mono {
+  text-align: right;
+}
+.advice .panel-head > .icon {
+  color: var(--accent);
+}
+.advice-body > * + * {
+  margin-top: var(--s3);
+}
+.advice-body p {
+  max-width: 78ch;
+}

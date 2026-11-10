@@ -1,0 +1,185 @@
+/* Quadrant design tokens. Every colour, size and radius the UI uses is named
+   here; component styles only ever reference these. See brand.md.
+
+   If you change --bg, --fg or --border, change the title bar colours in
+   src-tauri/src/chrome.rs to match. */
+
+@font-face {
+  font-family: "Fraunces";
+  src: url("../fonts/fraunces-latin-opsz-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: block;
+}
+@font-face {
+  font-family: "Schibsted Grotesk";
+  src: url("../fonts/schibsted-grotesk-latin-wght-normal.woff2") format("woff2");
+  font-weight: 400 900;
+  font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Schibsted Grotesk";
+  src: url("../fonts/schibsted-grotesk-latin-ext-wght-normal.woff2") format("woff2");
+  font-weight: 400 900;
+  font-display: block;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-display: block;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+  font-weight: 500;
+  font-display: block;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
+  font-weight: 600 800;
+  font-display: block;
+}
+
+:root {
+  /* Type. A serif for headings and the big numbers, like the engraving on
+     an instrument; a plain grotesque for everything you read. */
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Schibsted Grotesk", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+  --display-weight: 540;
+
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.375rem;
+  --text-dial: 4.25rem;
+
+  /* Space, on a 4 / 8 scale */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+
+  /* Shape */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --fast: 140ms;
+  --medium: 260ms;
+  --slow: 800ms;
+
+  --sidebar-w: 236px;
+}
+
+/* ── Dark (default) ─────────────────────────────────────────────────────── */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #131210;
+  --bg-sidebar: #0d0c0b;
+  --surface: #1a1917;
+  --surface-2: #22201d;
+  --surface-3: #2c2925;
+  --border: #302d28;
+  --border-strong: #4a453d;
+
+  --fg: #ece7de;
+  --fg-muted: #b5ad9f;
+  --fg-subtle: #8f887b;
+
+  /* The one accent. Actions, focus and the active nav item only. */
+  --accent: #d2a85c;
+  --accent-hover: #e0ba72;
+  --accent-press: #bd9449;
+  --accent-soft: rgb(210 168 92 / 0.12);
+  --accent-ring: rgb(210 168 92 / 0.5);
+  --on-accent: #1f1603;
+
+  /* Status. Always shown with a word or icon as well. */
+  --good: #8ccb97;
+  --good-soft: rgb(140 203 151 / 0.13);
+  --warn: #f2934a;
+  --warn-soft: rgb(242 147 74 / 0.13);
+  --bad: #f2647a;
+  --bad-soft: rgb(242 100 122 / 0.14);
+  --info: #8fb6e3;
+  --info-soft: rgb(143 182 227 / 0.13);
+  --neutral-soft: rgb(181 173 159 / 0.12);
+
+  --danger: #c9423f;
+  --danger-hover: #d8534f;
+  --on-danger: #ffffff;
+
+  --track: #2c2925;
+  --glow: rgb(210 168 92 / 0.07);
+  --grid-dot: rgb(236 231 222 / 0.05);
+  --shadow-pop: 0 18px 48px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.04);
+  --scrim: rgb(8 7 6 / 0.66);
+}
+
+/* ── Light ──────────────────────────────────────────────────────────────── */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f6f3ee;
+  --bg-sidebar: #ece7df;
+  --surface: #fffdf9;
+  --surface-2: #f3efe8;
+  --surface-3: #e7e1d7;
+  --border: #d6cfc3;
+  --border-strong: #b3aa9b;
+
+  --fg: #1c1915;
+  --fg-muted: #554e44;
+  --fg-subtle: #6e665a;
+
+  --accent: #86600f;
+  --accent-hover: #76540d;
+  --accent-press: #66480b;
+  --accent-soft: rgb(134 96 15 / 0.1);
+  --accent-ring: rgb(134 96 15 / 0.45);
+  --on-accent: #ffffff;
+
+  --good: #1f7a43;
+  --good-soft: rgb(31 122 67 / 0.1);
+  --warn: #ad4f0a;
+  --warn-soft: rgb(173 79 10 / 0.13);
+  --bad: #bb2d44;
+  --bad-soft: rgb(187 45 68 / 0.1);
+  --info: #2563a8;
+  --info-soft: rgb(37 99 168 / 0.1);
+  --neutral-soft: rgb(85 78 68 / 0.09);
+
+  --danger: #bb2d44;
+  --danger-hover: #a3263a;
+  --on-danger: #ffffff;
+
+  --track: #e4ddd2;
+  --glow: rgb(134 96 15 / 0.06);
+  --grid-dot: rgb(28 25 21 / 0.07);
+  --shadow-pop: 0 18px 48px rgb(28 25 21 / 0.18), 0 0 0 1px rgb(28 25 21 / 0.06);
+  --scrim: rgb(28 25 21 / 0.42);
+}
+
+/* Text size setting. Everything is in rem, so this scales the whole UI. */
+:root[data-text="standard"] { font-size: 16px; }
+:root[data-text="large"] { font-size: 17.5px; }
+:root[data-text="larger"] { font-size: 19.5px; }

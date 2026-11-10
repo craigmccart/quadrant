@@ -1,0 +1,954 @@
+/* Shared building blocks: buttons, chips, panels, form controls, tables,
+   dialogs, toasts. Page-specific layout lives in pages.css. */
+
+/* Icons come from the sprite through <use>, so the stroke settings have to
+   be set here: they are not inherited from the sprite file itself. */
+.icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  min-height: 38px;
+  padding: 0 var(--s4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--fg);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background var(--fast), border-color var(--fast), color var(--fast),
+    transform var(--fast);
+}
+.btn:hover {
+  background: var(--surface-2);
+  border-color: var(--fg-subtle);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.btn-primary:active {
+  background: var(--accent-press);
+  border-color: var(--accent-press);
+}
+
+.btn-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--on-danger);
+  font-weight: 700;
+}
+.btn-danger:hover {
+  background: var(--danger-hover);
+  border-color: var(--danger-hover);
+}
+
+.btn-quiet {
+  border-color: transparent;
+  color: var(--fg-muted);
+  font-weight: 500;
+}
+.btn-quiet:hover {
+  background: var(--surface-2);
+  border-color: transparent;
+  color: var(--fg);
+}
+
+.btn-lg {
+  min-height: 48px;
+  padding: 0 var(--s5);
+  font-size: var(--text-md);
+  border-radius: var(--r-md);
+}
+.btn-lg .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-sm {
+  min-height: 30px;
+  padding: 0 var(--s3);
+  font-size: var(--text-sm);
+}
+
+.btn-icon {
+  width: 34px;
+  min-height: 34px;
+  padding: 0;
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+.link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.link .icon {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--fast);
+}
+.link:hover .icon {
+  transform: translateX(2px);
+}
+
+/* ── Chips ──────────────────────────────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: var(--r-pill);
+  background: var(--neutral-soft);
+  color: var(--fg-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.chip .icon {
+  width: 13px;
+  height: 13px;
+}
+.chip.good {
+  background: var(--good-soft);
+  color: var(--good);
+}
+.chip.attention {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.chip.problem {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+.chip.info {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+/* ── Panels ─────────────────────────────────────────────────────────────── */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.panel-pad {
+  padding: var(--s5);
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
+  border-bottom: 1px solid var(--border);
+}
+.panel-head .section-title {
+  flex: 1;
+}
+
+/* A quiet notice: something to know, not an alarm. */
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-md);
+  background: var(--neutral-soft);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+.note .icon {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+}
+.note-body {
+  flex: 1;
+  min-width: 0;
+}
+.note.attention {
+  background: var(--warn-soft);
+  color: var(--fg);
+}
+.note.attention .icon {
+  color: var(--warn);
+}
+.note.problem {
+  background: var(--bad-soft);
+  color: var(--fg);
+}
+.note.problem .icon {
+  color: var(--bad);
+}
+.note.info .icon {
+  color: var(--info);
+}
+.note .btn {
+  flex: none;
+  align-self: center;
+}
+
+/* ── Form controls ──────────────────────────────────────────────────────── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.input,
+.select {
+  height: 38px;
+  padding: 0 var(--s3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.9375rem;
+  transition: border-color var(--fast), box-shadow var(--fast);
+}
+.input {
+  width: 100%;
+  user-select: text;
+  cursor: text;
+}
+.input::placeholder {
+  color: var(--fg-subtle);
+}
+.input:hover,
+.select:hover {
+  border-color: var(--fg-subtle);
+}
+.input:focus-visible,
+.select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.input.mono {
+  font-size: var(--text-sm);
+}
+.select {
+  padding-right: var(--s2);
+  cursor: pointer;
+}
+
+.search {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+  max-width: 420px;
+}
+.search .icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: var(--fg-subtle);
+  pointer-events: none;
+}
+.search .input {
+  padding-left: 36px;
+}
+
+/* Tick box. A real <input type=checkbox>, restyled. */
+.check {
+  appearance: none;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 5px;
+  background: var(--bg);
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: background var(--fast), border-color var(--fast);
+}
+.check::after {
+  content: "";
+  width: 11px;
+  height: 6px;
+  margin-top: -2px;
+  border-left: 2.5px solid var(--on-accent);
+  border-bottom: 2.5px solid var(--on-accent);
+  transform: rotate(-45deg) scale(0);
+  transition: transform var(--fast) var(--ease-out);
+}
+.check:hover {
+  border-color: var(--accent);
+}
+.check:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.check:checked::after {
+  transform: rotate(-45deg) scale(1);
+}
+.check:indeterminate {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.check:indeterminate::after {
+  width: 10px;
+  height: 0;
+  margin-top: 0;
+  border-left: 0;
+  transform: none;
+}
+.check:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* On/off switch. A real checkbox with role=switch. */
+.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 42px;
+  height: 24px;
+  margin: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  transition: background var(--fast), border-color var(--fast);
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--fg-muted);
+  transition: transform var(--fast) var(--ease-out), background var(--fast);
+}
+.switch:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.switch:checked::after {
+  transform: translateX(18px);
+  background: var(--on-accent);
+}
+.switch:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Segmented choice (theme, text size, filters). */
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 var(--s3);
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: background var(--fast), color var(--fast);
+}
+.segmented button .icon {
+  width: 15px;
+  height: 15px;
+}
+.segmented button:hover {
+  color: var(--fg);
+}
+.segmented button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+/* ── Progress ───────────────────────────────────────────────────────────── */
+
+.progress {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--track);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 220ms linear;
+}
+.progress.indeterminate .progress-fill {
+  width: 34%;
+  animation: slide 1.15s ease-in-out infinite;
+}
+@keyframes slide {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(310%);
+  }
+}
+
+.busy {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s4) var(--s5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.busy-main {
+  flex: 1;
+  min-width: 0;
+}
+.busy-text {
+  display: flex;
+  gap: var(--s3);
+  align-items: baseline;
+  margin-bottom: var(--s2);
+  font-size: var(--text-sm);
+}
+.busy-message {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg);
+  font-weight: 600;
+}
+.busy-tally {
+  flex: none;
+  color: var(--fg-muted);
+}
+
+/* A meter: how full something is. */
+.meter {
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--track);
+  overflow: hidden;
+}
+.meter-fill {
+  height: 100%;
+  width: var(--pct, 0%);
+  min-width: 2px;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width var(--slow) var(--ease-out);
+}
+.meter.good .meter-fill {
+  background: var(--good);
+}
+.meter.attention .meter-fill {
+  background: var(--warn);
+}
+.meter.problem .meter-fill {
+  background: var(--bad);
+}
+.meter.quiet .meter-fill {
+  background: var(--fg-subtle);
+}
+
+/* ── Tables ─────────────────────────────────────────────────────────────── */
+
+.table-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+table.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+.table th > button,
+.table th > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px var(--s4);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: uppercase;
+  text-align: inherit;
+}
+.table th > button:hover {
+  color: var(--fg);
+}
+.table th .icon {
+  width: 13px;
+  height: 13px;
+  opacity: 0.45;
+}
+.table th[aria-sort] .icon {
+  opacity: 1;
+  color: var(--accent);
+}
+.table th.right > button,
+.table th.right > span {
+  justify-content: flex-end;
+}
+.table td {
+  padding: 10px var(--s4);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.table tbody tr {
+  transition: background var(--fast);
+}
+.table tbody tr:hover {
+  background: var(--surface-2);
+}
+.table td.right,
+.table th.right {
+  text-align: right;
+}
+.table td.tight,
+.table th.tight {
+  width: 1%;
+  white-space: nowrap;
+}
+.table td.wrap {
+  word-break: break-word;
+}
+.table .cell-main {
+  font-weight: 600;
+  color: var(--fg);
+}
+.table .cell-sub {
+  margin-top: 1px;
+  font-size: var(--text-xs);
+  color: var(--fg-subtle);
+  word-break: break-all;
+}
+.table tr.dim td {
+  color: var(--fg-subtle);
+}
+.table tr.dim .cell-main {
+  color: var(--fg-muted);
+}
+.table-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+
+/* Reveal row actions on hover or keyboard focus, to keep tables calm. */
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s1);
+  opacity: 0;
+  transition: opacity var(--fast);
+}
+tr:hover .row-actions,
+tr:focus-within .row-actions,
+.row:hover .row-actions,
+.row:focus-within .row-actions {
+  opacity: 1;
+}
+
+/* ── Toolbar (filters, counts, bulk actions above a list) ───────────────── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin-bottom: var(--s4);
+}
+.toolbar-spacer {
+  flex: 1;
+}
+.toolbar-count {
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+
+/* ── Stat strip ─────────────────────────────────────────────────────────── */
+
+.stats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  margin-bottom: var(--s4);
+}
+.stat {
+  padding: var(--s4) var(--s5);
+  border-left: 1px solid var(--border);
+  min-width: 0;
+}
+.stat:first-child {
+  border-left: 0;
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-xl);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stat-label {
+  margin-top: 2px;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+
+/* ── Empty and first-run states ─────────────────────────────────────────── */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s3);
+  padding: var(--s7) var(--s6);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+}
+.empty-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.empty-icon .icon {
+  width: 22px;
+  height: 22px;
+}
+.empty-title {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-lg);
+}
+.empty-text {
+  max-width: 58ch;
+  color: var(--fg-muted);
+}
+
+/* ── Dialog ─────────────────────────────────────────────────────────────── */
+
+dialog.dialog {
+  width: min(560px, calc(100vw - 48px));
+  max-height: calc(100vh - 64px);
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+dialog.dialog[open] {
+  display: flex;
+  flex-direction: column;
+  animation: dialog-in var(--medium) var(--ease-out);
+}
+dialog.dialog::backdrop {
+  background: var(--scrim);
+  animation: fade-in var(--medium) ease-out;
+}
+.dialog-head {
+  padding: var(--s5) var(--s5) var(--s2);
+}
+.dialog-title {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--text-xl);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+.dialog-body {
+  padding: var(--s2) var(--s5) var(--s4);
+  overflow-y: auto;
+  color: var(--fg-muted);
+}
+.dialog-body > * + * {
+  margin-top: var(--s3);
+}
+.dialog-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s2);
+  padding: var(--s4) var(--s5);
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* An itemised list: what will be removed, or what was. Reads like a receipt. */
+.ledger {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: var(--text-sm);
+}
+.ledger-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: 9px var(--s4);
+  border-bottom: 1px dashed var(--border);
+}
+.ledger-row:last-child {
+  border-bottom: 0;
+}
+.ledger-name {
+  flex: 1;
+  min-width: 0;
+}
+.ledger-note {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--fg-subtle);
+}
+.ledger-value {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.ledger-row.total {
+  border-top: 1px solid var(--border-strong);
+  border-bottom: 0;
+  font-weight: 700;
+}
+.ledger-row.total .ledger-value {
+  font-size: var(--text-md);
+}
+
+/* ── Toasts ─────────────────────────────────────────────────────────────── */
+
+.toasts {
+  position: fixed;
+  right: var(--s5);
+  bottom: var(--s5);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  width: min(420px, calc(100vw - 48px));
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-pop);
+  font-size: var(--text-sm);
+  pointer-events: auto;
+  animation: toast-in var(--medium) var(--ease-out);
+}
+.toast .icon {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+}
+.toast.good .icon {
+  color: var(--good);
+}
+.toast.problem .icon {
+  color: var(--bad);
+}
+.toast.attention .icon {
+  color: var(--warn);
+}
+.toast-body {
+  flex: 1;
+  min-width: 0;
+  user-select: text;
+}
+.toast.leaving {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity var(--medium), transform var(--medium);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Key/value list ─────────────────────────────────────────────────────── */
+
+.kv {
+  display: grid;
+  grid-template-columns: minmax(120px, max-content) minmax(0, 1fr);
+}
+.kv dt,
+.kv dd {
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+.kv dt {
+  padding-right: var(--s6);
+  color: var(--fg-muted);
+}
+.kv dd {
+  font-weight: 600;
+  text-align: right;
+  user-select: text;
+  word-break: break-word;
+}
+.kv dt:nth-last-of-type(1),
+.kv dd:nth-last-of-type(1) {
+  border-bottom: 0;
+}
+
+/* A path shortened in the middle keeps both the drive and the file name. */
+.path {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  word-break: break-all;
+}
+
+.skeleton {
+  border-radius: var(--r-sm);
+  background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2));
+  background-size: 200% 100%;
+  animation: shimmer 1.3s linear infinite;
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}

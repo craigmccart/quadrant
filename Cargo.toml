@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["crates/core", "src-tauri"]
+
+[workspace.package]
+version = "3.0.0"
+edition = "2021"
+authors = ["sonofg0tham"]
+publish = false
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true
+
+# Keep our own code quick to rebuild in dev, but optimise dependencies so
+# hashing and directory walking are not painfully slow in debug builds.
+[profile.dev.package."*"]
+opt-level = 2

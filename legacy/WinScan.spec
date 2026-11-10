@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('C:/Users/craig/Github Repos/WinScan/winscan.ico', '.')]
+datas = [('C:/Repos/WinScan/winscan.ico', '.')]
 binaries = []
 hiddenimports = ['google.generativeai', 'PIL']
 tmp_ret = collect_all('customtkinter')
@@ -11,7 +11,7 @@ datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 
 a = Analysis(
-    ['C:/Users/craig/Github Repos/WinScan/winscan.py'],
+    ['C:/Repos/WinScan/winscan.py'],
     pathex=[],
     binaries=binaries,
     datas=datas,
@@ -44,5 +44,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['C:\\Users\\craig\\Github Repos\\WinScan\\winscan.ico'],
+    icon=['C:\\Repos\\WinScan\\winscan.ico'],
 )
