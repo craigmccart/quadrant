@@ -347,6 +347,53 @@ where
     Ok(info)
 }
 
+/// Open `path` without following any link and report what is really there.
+/// The handle allows others to read, write and delete, so the shell can still
+/// move the file while we hold it.
+fn inspect(path: &Path) -> io::Result<(OwnedHandle, HandleInfo)> {
+    let wide = wide_for_open(path);
+    // SAFETY: `wide` is NUL-terminated and outlives the call. No security
+    // attributes or template handle are passed.
+    let handle = unsafe {
+        CreateFileW(
+            PCWSTR(wide.as_ptr()),
+            FILE_READ_ATTRIBUTES.0,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            None,
+            OPEN_EXISTING,
+            FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
+            None,
+        )
+    }
+    .map_err(|e| io::Error::from_raw_os_error(e.code().0 & 0xFFFF))?;
+    let handle = OwnedHandle(handle);
+
+    let mut raw = BY_HANDLE_FILE_INFORMATION::default();
+    // SAFETY: the handle is open and `raw` is a valid struct for the call.
+    unsafe { GetFileInformationByHandle(handle.0, &mut raw) }.map_err(|_| io::Error::last_os_error())?;
+    let info = HandleInfo {
+        attrs: raw.dwFileAttributes,
+        bytes: ((raw.nFileSizeHigh as u64) << 32) | raw.nFileSizeLow as u64,
+        created: filetime_unix(raw.ftCreationTime),
+        modified: filetime_unix(raw.ftLastWriteTime),
+        final_path: final_path(handle.0)?,
+    };
+    Ok((handle, info))
+}
+
+/// `\\?\C:\x` as `C:\x` and `\\?\UNC\server\share` as `\\server\share`: the
+/// form the shell accepts.
+fn plain_path(path: &Path) -> PathBuf {
+    let s = path.to_string_lossy();
+    if let Some(rest) = s.strip_prefix(r"\\?\UNC\") {
+        PathBuf::from(format!(r"\\{rest}"))
+    } else if let Some(rest) = s.strip_prefix(r"\\?\") {
+        PathBuf::from(rest)
+    } else {
+        path.to_path_buf()
+    }
+}
+
 // ── Removing user-picked files ───────────────────────────────────────────────
 
 /// One file the user asked to remove, with what it looked like when scanned.
@@ -422,11 +469,31 @@ fn remove_one(t: &RemoveTarget, to_recycle_bin: bool, protector: &Protector) -> 
     }
 
     if to_recycle_bin {
-        match trash::delete(&t.path) {
+        // The shell recycles by path, so the checks above could be raced: a
+        // parent folder swapped for a junction would point the same string at
+        // a different file. Open the file without following links, run the
+        // same checks through the handle, and recycle the real path the
+        // handle resolved to. Windows will not rename a folder while a file
+        // inside it is open, so holding the handle pins that path until the
+        // shell has moved the file.
+        let (handle, info) = inspect(&t.path).map_err(|e| io_reason(&e))?;
+        if is_dir_attr(info.attrs) || is_reparse(info.attrs) {
+            return Err(NOT_PLAIN.into());
+        }
+        if protector.is_protected(&info.final_path) {
+            return Err(PROTECTED.into());
+        }
+        if info.bytes != t.bytes || info.modified != t.modified {
+            return Err(CHANGED.into());
+        }
+        let real = plain_path(&info.final_path);
+        let result = trash::delete(&real);
+        drop(handle);
+        match result {
             Ok(()) => Ok(()),
             // The shell can report a problem after the file has gone, so
             // the receipt goes by what is really on disk.
-            Err(e) if std::fs::symlink_metadata(&t.path).is_err() => {
+            Err(e) if std::fs::symlink_metadata(&real).is_err() => {
                 let _ = e;
                 Ok(())
             }
@@ -578,6 +645,41 @@ mod tests {
         let report = remove_files(&[t], false, &Ctx::none());
         assert_eq!(report.removed, 0);
         assert_eq!(report.failures[0].reason, "Protected system location");
+    }
+
+    #[test]
+    fn recycling_checks_the_real_path_behind_a_junction() {
+        // The path string looks harmless, but a parent folder is a junction
+        // into a protected place. The Recycle Bin route must notice.
+        let dir = tempfile::tempdir().expect("tempdir");
+        let guarded = tempfile::tempdir().expect("tempdir");
+        let precious = guarded.path().join("precious.txt");
+        write(&precious, 10);
+        let link = dir.path().join("link");
+        if !make_junction(&link, guarded.path()) {
+            return;
+        }
+        let real = std::fs::canonicalize(guarded.path()).expect("canonical");
+        let protector = Protector { roots: vec![path_key(&real).expect("key")] };
+        let via_link = link.join("precious.txt");
+        assert!(!protector.is_protected(&via_link));
+
+        let result = remove_one(&target(1, &via_link), true, &protector);
+        assert_eq!(result, Err("Protected system location".to_string()));
+        assert!(precious.exists());
+    }
+
+    /// Sends one small temp file to the real Recycle Bin, so it only runs on
+    /// request: `cargo test -p quadrant-core -- --ignored recycles`.
+    #[test]
+    #[ignore]
+    fn recycles_a_plain_file() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let f = dir.path().join("quadrant-recycle-test.bin");
+        write(&f, 10);
+        let report = remove_files(&[target(1, &f)], true, &Ctx::none());
+        assert_eq!(report.removed, 1, "{:?}", report.failures);
+        assert!(!f.exists());
     }
 
     #[test]

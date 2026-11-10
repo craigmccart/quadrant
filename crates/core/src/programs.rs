@@ -220,16 +220,30 @@ fn split_program(cmd: &str) -> (String, String) {
     }
 }
 
+/// Whether we may start this entry's uninstaller. A per-user entry lives in
+/// HKCU, which any program running as the user can write to. Running that
+/// command line from an elevated Quadrant would hand administrator rights to
+/// whatever was written there, so it is refused while elevated.
+fn may_launch(scope: Scope, elevated: bool) -> bool {
+    !(elevated && matches!(scope, Scope::User))
+}
+
 /// Start the uninstaller the program registered with Windows. Returns as soon
 /// as it has started: the uninstaller shows its own window.
 ///
 /// `id` must match an entry in a fresh `list()`, otherwise `Error::NotFound`.
 /// The command line comes from the registry, never from the caller.
 pub fn uninstall(id: &str) -> Result<()> {
-    let (_, _, entry) = read_all()
+    let (_, scope, entry) = read_all()
         .into_iter()
         .find(|(eid, _, _)| eid == id)
         .ok_or_else(|| Error::not_found("That program is no longer listed. Refresh the list."))?;
+    if !may_launch(scope, crate::elevation::is_elevated()) {
+        return Err(Error::refused(format!(
+            "{} was installed for your account only, so its uninstaller should not run with administrator rights. Reopen Quadrant without administrator rights, or remove it from Installed apps in Windows Settings.",
+            entry.name
+        )));
+    }
     let command = uninstall_command(&entry).ok_or_else(|| {
         Error::refused(format!("{} does not offer an uninstaller.", entry.name))
     })?;
@@ -316,6 +330,14 @@ mod tests {
 
     fn entry() -> Entry {
         Entry { name: "App".into(), subkey: "App".into(), ..Default::default() }
+    }
+
+    #[test]
+    fn per_user_uninstallers_never_run_elevated() {
+        assert!(may_launch(Scope::User, false));
+        assert!(may_launch(Scope::Machine, false));
+        assert!(may_launch(Scope::Machine, true));
+        assert!(!may_launch(Scope::User, true));
     }
 
     #[test]
