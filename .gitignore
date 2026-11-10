@@ -6,7 +6,7 @@ __pycache__/
 build/
 dist/
 
-# Secrets — the Gemini API key lives here in plain text; never commit it
+# Secrets: the old Python app kept a Gemini API key here in plain text; never commit it
 .winscan_key
 
 # Local-only Claude settings

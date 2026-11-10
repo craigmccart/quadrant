@@ -4,7 +4,7 @@
 import { api, onProgress } from "../api.js";
 import { h, icon, fill } from "../dom.js";
 import * as fmt from "../format.js";
-import { app, cleanOptions, on, setBusy } from "../store.js";
+import { app, cleanOptions, on, setBusy, settings } from "../store.js";
 import { navigate } from "../router.js";
 import { button, pageHead, emptyState, busyPanel, stats, riskChip, chip, checkbox, showError, revealButton, note } from "../ui.js";
 import { runClean } from "../cleanflow.js";
@@ -227,9 +227,9 @@ function makePage(area) {
       if (area !== "junk") return;
       const box = h("div", { class: "advice-body" });
       const ask = async () => {
-        fill(box, h("p", { class: "subtle" }, "Asking Gemini. This can take a few seconds."));
+        fill(box, h("p", { class: "subtle" }, "Asking the local model. The first answer can take a minute while the model loads."));
         try {
-          const text = await api.aiSummarise();
+          const text = await api.aiSummarise(settings.aiEndpoint, settings.aiModel);
           fill(box, text.split(/\n{2,}/).map((para) => h("p", { class: "selectable" }, para.trim())));
         } catch (err) {
           fill(box, note("attention", err.message, button("Open Settings", { size: "sm", onClick: () => navigate("settings") })));
@@ -240,11 +240,11 @@ function makePage(area) {
         h(
           "section",
           { class: "panel advice" },
-          h("div", { class: "panel-head" }, icon("sparkles"), h("h2", { class: "section-title" }, "A second opinion"), button("Ask Gemini", { size: "sm", icon: "sparkles", onClick: ask })),
+          h("div", { class: "panel-head" }, icon("sparkles"), h("h2", { class: "section-title" }, "A second opinion"), button("Ask local model", { size: "sm", icon: "sparkles", onClick: ask })),
           h("div", { class: "panel-pad" }, box)
         )
       );
-      fill(box, h("p", { class: "muted" }, "Optional. Gemini can explain this scan in plain English and suggest an order to clear things in. Only the category names and sizes above are sent. No file names, paths or account details leave this PC."));
+      fill(box, h("p", { class: "muted" }, "Optional. A model running on this PC can explain this scan in plain English and suggest an order to clear things in. It only sees the category names and sizes above, and nothing leaves this PC. Set it up in Settings."));
     }
 
     function render() {

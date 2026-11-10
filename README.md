@@ -1,10 +1,17 @@
-# Quadrant
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/craigmccart/quadrant/master/assets/quadrant-logo-dark.png">
+  <img src="https://raw.githubusercontent.com/craigmccart/quadrant/master/assets/quadrant-logo-light.png" alt="Quadrant" height="56">
+</picture>
+
+[![Licence](https://img.shields.io/github/license/craigmccart/quadrant?style=flat-square&label=licence&color=D2A85C)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-D2A85C?style=flat-square)](#prerequisites)
+[![Built with](https://img.shields.io/badge/built%20with-Rust%20%2B%20Tauri%202-D2A85C?style=flat-square)](#tech-stack)
 
 **Honest PC care for Windows. One Health Check, four areas, no scare tactics.**
 
 Quadrant looks at your PC across four areas (Space, Privacy, Speed and Security), shows you exactly what it found, and only removes or changes something after you say so.
 
-> Runs locally. No account, no telemetry, no upsell. Nothing leaves your machine unless you ask Gemini for advice.
+> 100% local. No account, no telemetry, no upsell, no API keys. Nothing leaves your machine.
 
 ![Quadrant Health Check, dark theme](assets/screenshot-dark.png)
 ![Quadrant Health Check, light theme](assets/screenshot-light.png)
@@ -49,9 +56,13 @@ One pass over all four areas, with a score out of 100 and a dial that shows each
 - **Network**: adapters and connections.
 - **System**: hardware, Windows version, memory and uptime.
 
-### Optional Gemini advice
+### Optional local AI advice
 
-Add your own Google Gemini API key in Settings to get plain-English advice on a scan. The key is stored in Windows Credential Manager, never in a file, and is never passed to the interface layer. Without a key, no AI request is made.
+Quadrant can ask a model running on your own PC to explain a junk scan in plain English and suggest an order to clear things in. It works with [Ollama](https://ollama.com), LM Studio, or anything else that offers the same local API. No account, no API key, no cost.
+
+- Quadrant will only talk to a model server on this PC (`127.0.0.1`). Any other address is refused in the Rust core, so a scan cannot be sent elsewhere.
+- The model only sees category names and sizes, never file names or paths.
+- It is off until you choose a model in Settings. Without one, no request is made.
 
 ## Safety model
 
@@ -68,7 +79,7 @@ Deleting files with administrator rights is where cleaners do damage, so the rul
 
 Version 3.0.0 is a full rebuild in Rust. The old Python app (2.1) is kept in `legacy/` and is no longer built.
 
-Checked so far on one Windows 11 PC: Health Check, the Junk Cleaner scan, Startup, Security, and duplicate removal on test files. Not yet checked: a full junk or privacy clean on a real machine, running as administrator, and the Gemini call. Scheduled Tasks currently needs Windows in English. Treat it as a beta.
+Checked so far on one Windows 11 PC: Health Check, the Junk Cleaner scan, Startup, Security, duplicate and large file removal on test files, and local model advice through Ollama. Not yet checked: a full junk or privacy clean on a real machine, and running as administrator. Scheduled Tasks currently needs Windows in English. Treat it as a beta.
 
 ## Prerequisites
 
@@ -102,7 +113,7 @@ quadrant/
 
 ## Testing
 
-98 unit tests cover the core, including every deletion rule. They use temporary folders and scratch registry keys only, never real system locations:
+97 unit tests cover the core, including every deletion rule. They use temporary folders and scratch registry keys only, never real system locations:
 
 ```bat
 cargo test -p quadrant-core

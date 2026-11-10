@@ -7,7 +7,7 @@
 //! - Commands that remove or change things take ids, which the core resolves
 //!   against its own allowlists or the scan results kept in `AppState`. A
 //!   path sent by the web view is never deleted.
-//! - The Gemini API key never reaches the web view.
+//! - The optional AI advice only ever calls a model server on this PC.
 
 mod chrome;
 mod commands;
@@ -70,9 +70,6 @@ pub fn run() {
             commands::reveal,
             commands::pick_folder,
             commands::ai_status,
-            commands::ai_set_key,
-            commands::ai_clear_key,
-            commands::ai_import_legacy,
             commands::ai_summarise,
             commands::history,
         ])
