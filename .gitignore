@@ -14,3 +14,9 @@ dist/
 
 # Scratch screenshots from .shot.ps1
 .shot.png
+
+# Rust build output
+target/
+
+# Tauri generated schemas
+src-tauri/gen/
