@@ -394,6 +394,30 @@ fn plain_path(path: &Path) -> PathBuf {
     }
 }
 
+/// The handle gives an exact, verbatim path. The shell takes the ordinary
+/// form, which Windows tidies up first: a trailing dot or space is dropped
+/// and names like NUL mean a device. A name that would be read differently
+/// could point the shell at another file, so those are refused.
+fn shell_safe(path: &Path) -> bool {
+    use std::path::Component;
+    path.components().all(|c| match c {
+        Component::Normal(name) => {
+            let name = name.to_string_lossy();
+            if name.ends_with('.') || name.ends_with(' ') {
+                return false;
+            }
+            let stem = name.split('.').next().unwrap_or("").trim_end().to_ascii_uppercase();
+            let device = matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL" | "CONIN$" | "CONOUT$")
+                || ((stem.starts_with("COM") || stem.starts_with("LPT"))
+                    && stem.len() == 4
+                    && stem.as_bytes()[3].is_ascii_digit());
+            !device
+        }
+        Component::CurDir | Component::ParentDir => false,
+        _ => true,
+    })
+}
+
 // ── Removing user-picked files ───────────────────────────────────────────────
 
 /// One file the user asked to remove, with what it looked like when scanned.
@@ -455,6 +479,7 @@ fn remove_one(t: &RemoveTarget, to_recycle_bin: bool, protector: &Protector) -> 
     const PROTECTED: &str = "Protected system location";
     const NOT_PLAIN: &str = "Not a plain file";
     const CHANGED: &str = "Changed since the scan";
+    const ODD_NAME: &str = "Its name is one Windows cannot recycle safely";
 
     if protector.is_protected(&t.path) {
         return Err(PROTECTED.into());
@@ -487,6 +512,9 @@ fn remove_one(t: &RemoveTarget, to_recycle_bin: bool, protector: &Protector) -> 
             return Err(CHANGED.into());
         }
         let real = plain_path(&info.final_path);
+        if !shell_safe(&real) {
+            return Err(ODD_NAME.into());
+        }
         let result = trash::delete(&real);
         drop(handle);
         match result {
@@ -667,6 +695,28 @@ mod tests {
         let result = remove_one(&target(1, &via_link), true, &protector);
         assert_eq!(result, Err("Protected system location".to_string()));
         assert!(precious.exists());
+    }
+
+    #[test]
+    fn names_the_shell_would_misread_are_not_recycled() {
+        assert!(shell_safe(Path::new(r"C:\Users\me\Downloads\film.mkv")));
+        assert!(shell_safe(Path::new(r"\\server\share\a b\c.d.txt")));
+        assert!(!shell_safe(Path::new(r"C:\Users\me\notes.")));
+        assert!(!shell_safe(Path::new(r"C:\Users\me\notes ")));
+        assert!(!shell_safe(Path::new(r"C:\Users\me\folder.\a.txt")));
+        assert!(!shell_safe(Path::new(r"C:\Users\me\NUL")));
+        assert!(!shell_safe(Path::new(r"C:\Users\me\com1.txt")));
+        assert!(!shell_safe(Path::new(r"C:\Users\me\..\x.txt")));
+
+        // End to end: a file whose name ends in a dot is refused, not recycled.
+        let dir = tempfile::tempdir().expect("tempdir");
+        let real = std::fs::canonicalize(dir.path()).expect("canonical");
+        let exact = real.join("odd.");
+        std::fs::write(&exact, b"0123456789").expect("write");
+        let result = remove_one(&target(1, &exact), true, &Protector::from_env());
+        assert_eq!(result, Err("Its name is one Windows cannot recycle safely".to_string()));
+        assert!(std::fs::symlink_metadata(&exact).is_ok());
+        std::fs::remove_file(&exact).expect("rm");
     }
 
     /// Sends one small temp file to the real Recycle Bin, so it only runs on

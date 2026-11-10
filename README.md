@@ -102,7 +102,7 @@ quadrant/
 
 ## Testing
 
-97 unit tests cover the core, including every deletion rule. They use temporary folders and scratch registry keys only, never real system locations:
+98 unit tests cover the core, including every deletion rule. They use temporary folders and scratch registry keys only, never real system locations:
 
 ```bat
 cargo test -p quadrant-core
