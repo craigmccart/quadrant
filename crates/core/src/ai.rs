@@ -1,8 +1,9 @@
-//! Optional Gemini advice on a junk scan.
+//! Optional advice on a junk scan from a model running on this PC.
 //!
-//! Only category names and sizes are sent. File names and paths never leave
-//! the machine. The API key travels in a header, never in the URL, and never
-//! appears in an error.
+//! Quadrant talks to a local model server (Ollama, LM Studio or anything
+//! else with the OpenAI-style API) on the loopback address only. Nothing is
+//! sent to the internet. Even so, only category names and sizes go into the
+//! prompt: file names and paths stay out of it.
 
 use std::time::Duration;
 
@@ -12,27 +13,110 @@ use crate::model::{AiStatus, CleanScan, Risk};
 use crate::util::fmt_bytes;
 use crate::{Error, Result};
 
-/// The Gemini model used for advice. Change it here and nowhere else.
-pub const GEMINI_MODEL: &str = "gemini-3.1-flash-lite-preview";
+/// Where Ollama listens by default. LM Studio uses port 1234.
+pub const DEFAULT_ENDPOINT: &str = "http://127.0.0.1:11434";
 
-const TIMEOUT: Duration = Duration::from_secs(30);
+const STATUS_TIMEOUT: Duration = Duration::from_secs(4);
+/// A local model may need to load into memory first, so this is generous.
+const ADVICE_TIMEOUT: Duration = Duration::from_secs(300);
 const MAX_CATEGORIES: usize = 40;
+const MAX_MODELS: usize = 200;
 
-/// Whether a key is saved, and a hint for showing it.
-pub fn status() -> AiStatus {
-    let key = crate::secrets::get_api_key().ok().flatten();
-    AiStatus {
-        has_key: key.is_some(),
-        key_hint: key.as_deref().map(key_hint).unwrap_or_default(),
-        model: GEMINI_MODEL.to_string(),
-        legacy_key_file: crate::secrets::legacy_key_file().is_some(),
+/// Check an endpoint the UI sent and return it in a standard form
+/// (`http://host:port`). Only plain HTTP to this PC is allowed: `127.0.0.1`,
+/// `localhost` or `[::1]`, with an optional port and nothing after it. This
+/// is what keeps the "nothing leaves your machine" promise, so do not loosen
+/// it.
+pub fn local_endpoint(input: &str) -> Result<String> {
+    let bad = || {
+        Error::refused(
+            "The model address must be on this PC, for example http://127.0.0.1:11434. Quadrant does not send scans to other computers.",
+        )
+    };
+    let text = input.trim().trim_end_matches('/');
+    if text.len() > 64 || text.chars().any(|c| c.is_control() || c.is_whitespace()) {
+        return Err(bad());
     }
+    let lower = text.to_ascii_lowercase();
+    let rest = lower.strip_prefix("http://").ok_or_else(bad)?;
+    let (host, port) = if let Some(after) = rest.strip_prefix("[::1]") {
+        ("[::1]", after)
+    } else if let Some(after) = rest.strip_prefix("127.0.0.1") {
+        ("127.0.0.1", after)
+    } else if let Some(after) = rest.strip_prefix("localhost") {
+        // Always dial the address, so a hosts file entry cannot move it.
+        ("127.0.0.1", after)
+    } else {
+        return Err(bad());
+    };
+    let port = match port {
+        "" => 80u16,
+        p => p
+            .strip_prefix(':')
+            .filter(|d| !d.is_empty() && d.len() <= 5 && d.bytes().all(|b| b.is_ascii_digit()))
+            .and_then(|d| d.parse::<u16>().ok())
+            .filter(|n| *n != 0)
+            .ok_or_else(bad)?,
+    };
+    Ok(format!("http://{host}:{port}"))
 }
 
-/// The last four characters of the key, for display only.
-fn key_hint(key: &str) -> String {
-    let chars: Vec<char> = key.chars().collect();
-    chars[chars.len().saturating_sub(4)..].iter().collect()
+fn check_model(model: &str) -> Result<&str> {
+    let model = model.trim();
+    if model.is_empty() {
+        return Err(Error::msg("Choose a model in Settings first."));
+    }
+    if model.len() > 200 || model.chars().any(|c| c.is_control()) {
+        return Err(Error::refused("That model name is not valid."));
+    }
+    Ok(model)
+}
+
+fn agent(timeout: Duration) -> ureq::Agent {
+    ureq::Agent::config_builder()
+        .timeout_global(Some(timeout))
+        .http_status_as_error(false)
+        // A local server must not be able to bounce the request elsewhere.
+        .max_redirects(0)
+        // Never route a loopback call through a system or environment proxy.
+        .proxy(None)
+        .build()
+        .into()
+}
+
+/// `data[*].id` from an OpenAI-style model list.
+fn extract_models(body: &Value) -> Vec<String> {
+    let mut out: Vec<String> = body
+        .get("data")
+        .and_then(Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|m| m.get("id").and_then(Value::as_str))
+                .map(str::trim)
+                .filter(|id| !id.is_empty() && id.len() <= 200 && !id.chars().any(|c| c.is_control()))
+                .map(str::to_string)
+                .take(MAX_MODELS)
+                .collect()
+        })
+        .unwrap_or_default();
+    out.sort();
+    out.dedup();
+    out
+}
+
+/// Whether a model server is answering at `endpoint`, and which models it
+/// offers. An unreachable server is a normal state, not an error.
+pub fn status(endpoint: &str) -> Result<AiStatus> {
+    let endpoint = local_endpoint(endpoint)?;
+    let models = agent(STATUS_TIMEOUT)
+        .get(&format!("{endpoint}/v1/models"))
+        .call()
+        .ok()
+        .filter(|resp| resp.status().is_success())
+        .and_then(|mut resp| resp.body_mut().read_json::<Value>().ok())
+        .map(|body| extract_models(&body));
+    Ok(AiStatus { endpoint, reachable: models.is_some(), models: models.unwrap_or_default() })
 }
 
 /// Remove anything that could identify the person or a file: any word that
@@ -101,7 +185,7 @@ fn build_prompt(scan: &CleanScan, names: &[String]) -> String {
     format!(
         "You are a Windows clean-up assistant. A scan by the Quadrant app found these junk categories \
 (total {total}, of which {safe} is rated safe):\n{list}\n\n\
-Reply in plain UK English, under 220 words, as plain text with short paragraphs and no markdown tables. Cover: \
+Reply in plain UK English, under 220 words, as plain text with short paragraphs and no markdown. Cover: \
 how much space can go, what is safe to clear now, what deserves a look first, and one suggested order to do it in.",
         total = fmt_bytes(scan.total_bytes),
         safe = fmt_bytes(scan.safe_bytes),
@@ -110,59 +194,51 @@ how much space can go, what is safe to clear now, what deserves a look first, an
 }
 
 /// A friendly message for a non-success HTTP status.
-fn status_message(code: u16) -> String {
+fn status_message(code: u16, model: &str) -> String {
     match code {
-        400 | 401 | 403 => "Gemini did not accept the API key. Check it in Settings.".into(),
-        404 => format!(
-            "Gemini does not recognise the model name {GEMINI_MODEL}. It may have been retired."
-        ),
-        429 => "Gemini is rate limiting requests. Try again in a minute.".into(),
-        500..=599 => "Gemini is having trouble right now. Try again later.".into(),
-        _ => format!("Gemini gave an unexpected reply (HTTP {code})."),
+        404 => format!("The model server does not have a model called {model}. Pick another in Settings."),
+        500..=599 => {
+            "The local model ran into a problem. It may have run out of memory. Try a smaller model.".into()
+        }
+        _ => format!("The local model server gave an unexpected reply (HTTP {code})."),
     }
 }
 
-/// `candidates[0].content.parts[*].text`, joined. None when empty or blocked.
+/// `choices[0].message.content`. None when empty.
 fn extract_text(body: &Value) -> Option<String> {
-    let parts = body.pointer("/candidates/0/content/parts")?.as_array()?;
-    let text: String = parts.iter().filter_map(|p| p.get("text").and_then(Value::as_str)).collect();
-    let text = text.trim();
+    let text = body.pointer("/choices/0/message/content")?.as_str()?.trim();
     (!text.is_empty()).then(|| text.to_string())
 }
 
-/// Ask Gemini for short, plain advice on a junk scan. Blocks for up to 30
-/// seconds. Uses the key from `crate::secrets`.
-pub fn summarise(scan: &CleanScan) -> Result<String> {
-    let key = crate::secrets::get_api_key()?
-        .ok_or_else(|| Error::msg("Add a Gemini API key in Settings first."))?;
+/// Ask the local model for short, plain advice on a junk scan. Blocks until
+/// the model answers, for up to five minutes.
+pub fn summarise(scan: &CleanScan, endpoint: &str, model: &str) -> Result<String> {
+    let endpoint = local_endpoint(endpoint)?;
+    let model = check_model(model)?;
     let prompt = build_prompt(scan, &identifying_names());
-    let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-    );
-    let agent: ureq::Agent = ureq::Agent::config_builder()
-        .timeout_global(Some(TIMEOUT))
-        .http_status_as_error(false)
-        .build()
-        .into();
-    let body = json!({ "contents": [ { "parts": [ { "text": prompt } ] } ] });
+    let body = json!({
+        "model": model,
+        "messages": [ { "role": "user", "content": prompt } ],
+        "stream": false,
+        "temperature": 0.3,
+    });
 
-    // Transport errors are replaced wholesale: their text is never shown.
-    let mut resp = agent
-        .post(&url)
-        .header("x-goog-api-key", key.as_str())
+    let mut resp = agent(ADVICE_TIMEOUT)
+        .post(&format!("{endpoint}/v1/chat/completions"))
         .send_json(&body)
-        .map_err(|_| Error::msg("Could not reach Gemini. Check the internet connection."))?;
-    drop(key);
+        .map_err(|_| {
+            Error::msg(
+                "Could not get an answer from the local model. Check that Ollama or LM Studio is running. A large model can also take too long.",
+            )
+        })?;
 
     let code = resp.status().as_u16();
     if !(200..300).contains(&code) {
-        return Err(Error::msg(status_message(code)));
+        return Err(Error::msg(status_message(code, model)));
     }
-    let json: Value = resp
-        .body_mut()
-        .read_json()
-        .map_err(|_| Error::msg("Gemini returned no advice."))?;
-    extract_text(&json).ok_or_else(|| Error::msg("Gemini returned no advice."))
+    let json: Value =
+        resp.body_mut().read_json().map_err(|_| Error::msg("The local model returned no advice."))?;
+    extract_text(&json).ok_or_else(|| Error::msg("The local model returned no advice."))
 }
 
 #[cfg(test)]
@@ -170,7 +246,7 @@ mod tests {
     use super::*;
     use crate::model::{Area, CleanCategory};
 
-    // The real Gemini API is never called from a test.
+    // No model server is called from a test, apart from one closed port.
 
     fn sample_scan() -> CleanScan {
         let cat = |id: &str, label: &str, bytes: u64, risk: Risk, note: &str| CleanCategory {
@@ -232,32 +308,72 @@ mod tests {
     }
 
     #[test]
-    fn hints_last_four() {
-        assert_eq!(key_hint("abcdefgh"), "efgh");
-        assert_eq!(key_hint("abc"), "abc");
-        assert_eq!(key_hint(""), "");
+    fn only_this_pc_is_allowed() {
+        assert_eq!(local_endpoint("http://127.0.0.1:11434").unwrap(), "http://127.0.0.1:11434");
+        assert_eq!(local_endpoint(" http://LOCALHOST:1234/ ").unwrap(), "http://127.0.0.1:1234");
+        assert_eq!(local_endpoint("http://[::1]:8080").unwrap(), "http://[::1]:8080");
+        assert_eq!(local_endpoint("http://127.0.0.1").unwrap(), "http://127.0.0.1:80");
+        for bad in [
+            "",
+            "https://127.0.0.1:11434",
+            "http://example.com",
+            "http://192.168.1.10:11434",
+            "http://0.0.0.0:11434",
+            "http://127.0.0.1.example.com",
+            "http://127.0.0.1@example.com",
+            "http://localhost.example.com:80",
+            "http://localhost:11434@example.com",
+            "http://127.0.0.1:11434/v1",
+            "http://127.0.0.1:11434?x=1",
+            "http://127.0.0.1:11434#x",
+            "http://127.0.0.1:0",
+            "http://127.0.0.1:99999",
+            "http://127.0.0.1:12a",
+            "http://127.0.0.1:",
+            "http://127.0.0.1 :80",
+            "ftp://127.0.0.1",
+            "127.0.0.1:11434",
+            "http://[::1%25eth0]:80",
+            "http://[::ffff:8.8.8.8]:80",
+        ] {
+            assert!(local_endpoint(bad).is_err(), "accepted {bad}");
+        }
+    }
+
+    #[test]
+    fn model_names_are_checked() {
+        assert_eq!(check_model(" qwen2.5:7b ").unwrap(), "qwen2.5:7b");
+        assert!(check_model("").is_err());
+        assert!(check_model("   ").is_err());
+        assert!(check_model("a\u{7}b").is_err());
+        assert!(check_model(&"x".repeat(201)).is_err());
+    }
+
+    #[test]
+    fn unreachable_server_is_a_normal_state() {
+        // Port 9 (discard) is not expected to hold a model server.
+        let s = status("http://127.0.0.1:9").unwrap();
+        assert!(!s.reachable);
+        assert!(s.models.is_empty());
+        assert!(status("http://example.com").is_err());
     }
 
     #[test]
     fn maps_statuses() {
-        for c in [400, 401, 403] {
-            assert_eq!(status_message(c), "Gemini did not accept the API key. Check it in Settings.");
-        }
-        assert!(status_message(404).contains(GEMINI_MODEL));
-        assert_eq!(status_message(429), "Gemini is rate limiting requests. Try again in a minute.");
-        assert!(status_message(503).contains("trouble"));
-        assert!(status_message(418).contains("418"));
+        assert!(status_message(404, "tiny").contains("tiny"));
+        assert!(status_message(500, "tiny").contains("problem"));
+        assert!(status_message(418, "tiny").contains("418"));
     }
 
     #[test]
-    fn extracts_text() {
-        let ok = json!({"candidates":[{"content":{"parts":[{"text":"Clear temp. "},{"text":"Then downloads."}]}}]});
-        assert_eq!(extract_text(&ok).as_deref(), Some("Clear temp. Then downloads."));
-        let blocked = json!({"promptFeedback":{"blockReason":"SAFETY"}});
-        assert_eq!(extract_text(&blocked), None);
-        let empty = json!({"candidates":[{"content":{"parts":[{"text":"  "}]}}]});
-        assert_eq!(extract_text(&empty), None);
-        let no_parts = json!({"candidates":[{"finishReason":"SAFETY"}]});
-        assert_eq!(extract_text(&no_parts), None);
+    fn extracts_models_and_text() {
+        let list = json!({"data":[{"id":"b-model"},{"id":"a-model"},{"id":"a-model"},{"id":""},{"nope":1}]});
+        assert_eq!(extract_models(&list), vec!["a-model".to_string(), "b-model".to_string()]);
+        assert!(extract_models(&json!({"models":[]})).is_empty());
+
+        let ok = json!({"choices":[{"message":{"role":"assistant","content":" Clear temp first. "}}]});
+        assert_eq!(extract_text(&ok).as_deref(), Some("Clear temp first."));
+        assert_eq!(extract_text(&json!({"choices":[{"message":{"content":"  "}}]})), None);
+        assert_eq!(extract_text(&json!({"error":"x"})), None);
     }
 }

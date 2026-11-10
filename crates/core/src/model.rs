@@ -540,10 +540,10 @@ pub struct History {
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct AiStatus {
-    pub has_key: bool,
-    /// Last four characters of the saved key, for display only.
-    pub key_hint: String,
-    pub model: String,
-    /// True when an old plain-text `.winscan_key` file sits next to the EXE.
-    pub legacy_key_file: bool,
+    /// The checked address of the local model server, `http://host:port`.
+    pub endpoint: String,
+    /// True when a model server answered there.
+    pub reachable: bool,
+    /// Names of the models it offers, sorted.
+    pub models: Vec<String>,
 }

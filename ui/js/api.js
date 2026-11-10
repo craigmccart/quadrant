@@ -95,11 +95,8 @@ export const api = {
   reveal: (path) => call("reveal", { path }),
   pickFolder: () => call("pick_folder"),
 
-  aiStatus: () => call("ai_status"),
-  aiSetKey: (key) => call("ai_set_key", { key }),
-  aiClearKey: () => call("ai_clear_key"),
-  aiImportLegacy: () => call("ai_import_legacy"),
-  aiSummarise: () => call("ai_summarise"),
+  aiStatus: (endpoint) => call("ai_status", { endpoint }),
+  aiSummarise: (endpoint, model) => call("ai_summarise", { endpoint, model }),
 
   history: () => call("history"),
 };

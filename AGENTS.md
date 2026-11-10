@@ -1,6 +1,6 @@
 # Quadrant
 
-Windows PC care app: one-click Health Check, junk and privacy cleaning, duplicates, large files, disk map, startup, programs, scheduled tasks, security checks, network view. Rust core with a Tauri 2 shell; the window is plain HTML/CSS/JS in WebView2. Optional Google Gemini advice.
+Windows PC care app: one-click Health Check, junk and privacy cleaning, duplicates, large files, disk map, startup, programs, scheduled tasks, security checks, network view. Rust core with a Tauri 2 shell; the window is plain HTML/CSS/JS in WebView2. Optional advice from a model running locally (Ollama, LM Studio).
 
 Version 3 is a Rust rebuild. The old Python/CustomTkinter app (2.1) is parked in `legacy/` and is not built or maintained.
 
@@ -13,7 +13,7 @@ Version 3 is a Rust rebuild. The old Python/CustomTkinter app (2.1) is parked in
   - `diskmap.rs`, `largefiles.rs`, `duplicates.rs` - the file tools.
   - `system.rs`, `startup.rs`, `programs.rs`, `tasks.rs`, `network.rs`, `security.rs` - the inspection tools.
   - `shell.rs` - opens Windows pages from a fixed id allowlist. `elevation.rs` - admin check and relaunch.
-  - `secrets.rs` - Gemini key in Windows Credential Manager. `ai.rs` - the Gemini call and `GEMINI_MODEL`.
+  - `ai.rs` - optional advice from a local model server. Loopback addresses only.
   - `health.rs` - Health Check orchestration and scoring. `history.rs` - clean-up receipts.
 - `src-tauri/` - the app shell. `commands.rs` is the full list of what the web view may call. `state.rs` holds scan results between calls. `chrome.rs` tints the native title bar.
 - `ui/` - the interface. No bundler, no npm: ES modules loaded as they are.
@@ -21,7 +21,7 @@ Version 3 is a Rust rebuild. The old Python/CustomTkinter app (2.1) is parked in
   - `js/api.js` - every backend call. `js/mock.js` - fake backend used only in a browser preview.
   - `js/pages/*.js` - one module per page. `js/dial.js` - the health dial.
   - `fonts/` (SIL OFL), `img/icons.svg` (Lucide, built by `tools/build-icons.mjs`).
-- `tools/cdp.mjs` - drives a debug build through the WebView2 DevTools port for screenshots and checks.
+- `tools/build-logo.mjs` - renders the README logo PNGs in `assets/`. `tools/cdp.mjs` - drives a debug build through the WebView2 DevTools port for screenshots and checks.
 - `brand.md` - design direction and tokens. `legacy/` - the Python app.
 
 ## Run / build / test
@@ -40,11 +40,11 @@ Checking the real app: set `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debug
 
 - Destructive commands take ids, never paths. Ids are resolved in the core against the category allowlist, a fresh listing, or the scan kept in `AppState`. Keep it that way.
 - Deleting never follows junctions or symlinks, never removes a category root, and counts locked files as skipped. Each rule has a test in `cleanup.rs` or `fsops.rs`. Do not weaken one without changing its test on purpose.
-- Tests must not touch real system locations, the real Run keys, the real API key, or open windows. Use temp folders and scratch keys.
+- Tests must not touch real system locations, the real Run keys, or open windows. Use temp folders and scratch keys.
 - The UI builds DOM with `h()` from `js/dom.js`, never HTML strings: file and program names are untrusted text. The CSP in `tauri.conf.json` has no `unsafe-inline`; set styles through the `style` prop (CSSOM).
 - The web view gets no Tauri plugins. New capability means a new command in `commands.rs`.
 - Release builds ignore the `WEBVIEW2_*` override environment variables (see `src-tauri/src/lib.rs`), because the app often runs elevated.
 - Change a field in `model.rs` and the UI (and `mock.js`) must change with it.
 - Colours, sizes and radii come from `ui/css/tokens.css`. If `--bg`, `--fg` or `--border` change, update `src-tauri/src/chrome.rs` to match.
-- The Gemini key lives in Credential Manager. Never write it to a file or send it to the web view. Never commit `.winscan_key` (the old plain-text key file).
+- AI advice only ever calls a model server on this PC. `ai::local_endpoint` refuses anything that is not loopback; do not loosen it. There are no API keys. Never commit `.winscan_key` (a plain-text key file from the old Python app).
 - UI copy: plain UK English, no em dashes, no exclamation marks, no scare wording.

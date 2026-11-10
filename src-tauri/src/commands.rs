@@ -16,7 +16,7 @@ use quadrant_core::model::{
 };
 use quadrant_core::{
     ai, cleanup, diskmap, duplicates, elevation, fsops, health, history, largefiles, network,
-    programs, secrets, security, shell, startup, system, tasks, Ctx, Error,
+    programs, security, shell, startup, system, tasks, Ctx, Error,
 };
 
 use crate::state::AppState;
@@ -452,43 +452,16 @@ pub async fn pick_folder(window: WebviewWindow) -> Cmd<Option<String>> {
 // ── AI advice ────────────────────────────────────────────────────────────────
 
 #[tauri::command]
-pub async fn ai_status() -> Cmd<AiStatus> {
-    blocking(|| Ok(ai::status())).await
+pub async fn ai_status(endpoint: String) -> Cmd<AiStatus> {
+    blocking(move || ai::status(&endpoint)).await
 }
 
 #[tauri::command]
-pub async fn ai_set_key(key: String) -> Cmd<AiStatus> {
-    blocking(move || {
-        secrets::set_api_key(key.trim())?;
-        Ok(ai::status())
-    })
-    .await
-}
-
-#[tauri::command]
-pub async fn ai_clear_key() -> Cmd<AiStatus> {
-    blocking(|| {
-        secrets::clear_api_key()?;
-        Ok(ai::status())
-    })
-    .await
-}
-
-#[tauri::command]
-pub async fn ai_import_legacy() -> Cmd<AiStatus> {
-    blocking(|| {
-        secrets::import_legacy_key()?;
-        Ok(ai::status())
-    })
-    .await
-}
-
-#[tauri::command]
-pub async fn ai_summarise(state: Shared<'_>) -> Cmd<String> {
+pub async fn ai_summarise(state: Shared<'_>, endpoint: String, model: String) -> Cmd<String> {
     let scan = lock(&state.junk).clone();
     blocking(move || {
         let scan = scan.ok_or_else(|| Error::msg("Run a junk scan first, then ask for advice."))?;
-        ai::summarise(&scan)
+        ai::summarise(&scan, &endpoint, &model)
     })
     .await
 }

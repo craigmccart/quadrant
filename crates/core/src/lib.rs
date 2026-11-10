@@ -25,7 +25,6 @@ pub mod ai;
 pub mod elevation;
 pub mod network;
 pub mod programs;
-pub mod secrets;
 pub mod security;
 pub mod shell;
 pub mod startup;

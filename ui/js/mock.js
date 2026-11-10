@@ -278,7 +278,6 @@ let HISTORY = [
     items: [{ id: "recent-files", label: "Recent files list", freedBytes: 2.1 * MB, removed: 204, skipped: 0 }] },
 ];
 
-let aiKey = "";
 let elevated = false;
 
 // A small made-up folder tree for the disk map.
@@ -420,13 +419,10 @@ const commands = {
   reveal: () => null,
   pick_folder: async () => { await sleep(200); return "D:\\Media"; },
 
-  ai_status: () => ({ hasKey: Boolean(aiKey), keyHint: aiKey.slice(-4), model: "gemini-3.1-flash-lite-preview", legacyKeyFile: !aiKey }),
-  ai_set_key: ({ key }) => { aiKey = key; return commands.ai_status(); },
-  ai_clear_key: () => { aiKey = ""; return commands.ai_status(); },
-  ai_import_legacy: () => { aiKey = "AIzaSyExampleKey9f3Q"; return commands.ai_status(); },
-  ai_summarise: async () => {
+  ai_status: ({ endpoint }) => ({ endpoint, reachable: true, models: ["llama3.2:3b", "qwen2.5:7b-instruct"] }),
+  ai_summarise: async ({ model }) => {
     await sleep(1400);
-    if (!aiKey) throw { kind: "message", message: "Add a Gemini API key in Settings first." };
+    if (!model) throw { kind: "message", message: "Choose a model in Settings first." };
     return "You can free about 5.1 GB straight away, and up to 18 GB if you go through the review items.\n\nSafe to clear now: Windows Update downloads (2.3 GB), the Chrome and Edge caches (1.6 GB together), temporary files and crash dumps. Windows and your browsers rebuild all of these on their own.\n\nWorth a look first: Large old downloads (6.4 GB) are your own files, so check the list before sending them to the Recycle Bin. The Recycle Bin itself holds 3.9 GB, which is gone for good once emptied. The npm and NuGet caches are safe but your next build will be slower while they refill.\n\nSuggested order: clear the safe items, restart your browsers, then review Downloads and empty the Recycle Bin once you are sure.";
   },
 

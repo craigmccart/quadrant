@@ -408,3 +408,12 @@
     display: none;
   }
 }
+
+.key-row .ai-label {
+  align-self: center;
+  min-width: 3.5rem;
+}
+.key-row .select {
+  flex: 1;
+  min-width: 0;
+}

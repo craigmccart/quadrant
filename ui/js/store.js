@@ -10,6 +10,8 @@ const DEFAULTS = {
   text: "standard", // "standard" | "large" | "larger"
   tempMinAgeHours: 24, // 0 switches the rule off
   recycle: true, // Large Files and Duplicates go to the Recycle Bin
+  aiEndpoint: "http://127.0.0.1:11434", // local model server; Ollama by default
+  aiModel: "", // chosen in Settings from the models the server offers
 };
 
 function loadSettings() {
